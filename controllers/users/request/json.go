@@ -8,27 +8,32 @@ import (
 )
 
 type UserLogin struct {
-	Email    string `json:"email" validate:"required,email"`
+	// Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
+	// Email    string `json:"email"`
+	// Password string `json:"password"`
 }
 
 type UserRegistration struct {
-	Name     string `json:"name" validate:"required,NotEmpty"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	// Name     string `json:"name" validate:"required,NotEmpty"`
+	// Email    string `json:"email" validate:"required,email"`
+	// Password string `json:"password" validate:"required"`
+	Name string `json:"name"`
+	// Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (req *UserLogin) ToDomainLogin() *users.Domain {
 	return &users.Domain{
-		Email:    req.Email,
+		// Email:    req.Email,
 		Password: req.Password,
 	}
 }
 
 func (req *UserRegistration) ToDomain() *users.Domain {
 	return &users.Domain{
-		Name:     req.Name,
-		Email:    req.Email,
+		Name: req.Name,
+		// Email:    req.Email,
 		Password: req.Password,
 	}
 }

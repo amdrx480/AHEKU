@@ -2,6 +2,7 @@ package routes
 
 import (
 	// "backend-golang/app/middlewares"
+	stocks "backend-golang/controllers/stocks"
 	"backend-golang/controllers/users"
 
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -12,34 +13,23 @@ type ControllerList struct {
 	LoggerMiddleware echo.MiddlewareFunc
 	JWTMiddleware    echojwt.Config
 	AuthController   users.AuthController
+
+	StocksController stocks.StockController
 }
 
 func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	e.Use(cl.LoggerMiddleware)
 
-	users := e.Group("auth")
+	// users := e.Group("auth")
 
-	users.POST("/register", cl.AuthController.Register)
-	users.POST("/login", cl.AuthController.Login)
+	// users.POST("/register", cl.AuthController.Register)
+	// users.POST("/login", cl.AuthController.Login)
+	e.POST("register", cl.AuthController.Register)
+	e.POST("login", cl.AuthController.Login)
 
-	// course := e.Group("/api/v1/courses", echojwt.WithConfig(cl.JWTMiddleware))
-	// course.Use(middlewares.VerifyToken)
+	stocks := e.Group("stocks", echojwt.WithConfig(cl.JWTMiddleware))
+	stocks.GET("/:id", cl.StocksController.GetByID)
+	stocks.POST("", cl.StocksController.Create)
+	stocks.GET("", cl.StocksController.GetAll)
 
-	// course.GET("", cl.CourseController.GetAll)
-	// course.GET("/:id", cl.CourseController.GetByID)
-	// course.POST("", cl.CourseController.Create)
-	// course.PUT("/:id", cl.CourseController.Update)
-	// course.DELETE("/:id", cl.CourseController.Delete)
-	// course.POST("/:id", cl.CourseController.Restore)
-	// course.DELETE("/:id/force", cl.CourseController.ForceDelete)
-
-	// category := e.Group("/api/v1/categories", echojwt.WithConfig(cl.JWTMiddleware))
-	// category.Use(middlewares.VerifyToken)
-
-	// category.GET("", cl.CategoryController.GetAll)
-	// category.POST("", cl.CategoryController.Create)
-	// category.PUT("/:id", cl.CategoryController.Update)
-	// category.DELETE("/:id", cl.CategoryController.Delete)
-
-	//test
 }
