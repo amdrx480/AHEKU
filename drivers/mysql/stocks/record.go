@@ -2,6 +2,9 @@ package stocks
 
 import (
 	"backend-golang/businesses/stocks"
+	"backend-golang/drivers/mysql/category"
+	"backend-golang/drivers/mysql/units"
+
 	// stockhistory "backend-golang/drivers/mysql/stock_history"
 	// stockins "backend-golang/drivers/mysql/stock_ins"
 
@@ -10,68 +13,49 @@ import (
 	"gorm.io/gorm"
 )
 
-// ID             uint
-// CreatedAt      time.Time
-// UpdatedAt      time.Time
-// DeletedAt      gorm.DeletedAt
-// Stock_Location string
-// Stock_Code     string
-// Stock_Category string
-// // Stock_QRCode   string
-// Stock_Name string
-// // Stock_Unit     string
-// Stock_Pcs   string
-// Stock_Pack  string
-// Stock_Roll  string
-// Stock_Meter string
-// // Stock_Total int
-
 type Stock struct {
-	ID             uint           `json:"id" gorm:"primaryKey"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	DeletedAt      gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	Stock_Location string         `json:"stock_location"`
-	Stock_Code     string         `json:"stock_code"`
-	Stock_Category string         `json:"stock_category"`
-	// Stock_QRCode   string         `json:"stock_qrcode"`
-	Stock_Name  string `json:"stock_name"`
-	Stock_Pcs   int    `json:"stock_pcs"`
-	Stock_Pack  int    `json:"stock_pack"`
-	Stock_Roll  int    `json:"stock_roll"`
-	Stock_Meter int    `json:"stock_meter"`
-	// Stock_Total    int            `json:"stock_total"`
+	ID            uint              `json:"id" gorm:"primaryKey"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt    `json:"deleted_at" gorm:"index"`
+	Stock_Name    string            `json:"stock_name"`
+	Stock_Code    string            `json:"stock_code"`
+	Category      category.Category `json:"-" gorm:"foreignKey:CategoryID"`
+	CategoryID    uint              `json:"category_id"`
+	Units         units.Units       `json:"-" gorm:"foreignKey:units_id"`
+	UnitsID       uint              `json:"units_id"`
+	Stock_Total   int               `json:"stock_total"`
+	Selling_Price int               `json:"selling_price"`
+	// StockID        uint           `json:"stock_id"`
 }
 
 func (rec *Stock) ToDomain() stocks.Domain {
 	return stocks.Domain{
-		ID:             rec.ID,
-		CreatedAt:      rec.CreatedAt,
-		UpdatedAt:      rec.UpdatedAt,
-		DeletedAt:      rec.DeletedAt,
-		Stock_Code:     rec.Stock_Code,
-		Stock_Location: rec.Stock_Location,
-		Stock_Category: rec.Stock_Category,
-		Stock_Name:     rec.Stock_Name,
-		Stock_Pcs:      rec.Stock_Pcs,
-		Stock_Pack:     rec.Stock_Pack,
-		Stock_Roll:     rec.Stock_Roll,
-		Stock_Meter:    rec.Stock_Meter,
+		ID:            rec.ID,
+		CreatedAt:     rec.CreatedAt,
+		UpdatedAt:     rec.UpdatedAt,
+		DeletedAt:     rec.DeletedAt,
+		Stock_Code:    rec.Stock_Code,
+		Stock_Name:    rec.Stock_Name,
+		CategoryID:    rec.CategoryID,
+		UnitsID:       rec.UnitsID,
+		Stock_Total:   rec.Stock_Total,
+		Selling_Price: rec.Selling_Price,
+		// StockID:        rec.StockID,
 	}
 }
 func FromDomain(domain *stocks.Domain) *Stock {
 	return &Stock{
-		ID:             domain.ID,
-		CreatedAt:      domain.CreatedAt,
-		UpdatedAt:      domain.UpdatedAt,
-		DeletedAt:      domain.DeletedAt,
-		Stock_Location: domain.Stock_Location,
-		Stock_Code:     domain.Stock_Code,
-		Stock_Category: domain.Stock_Category,
-		Stock_Name:     domain.Stock_Name,
-		Stock_Pcs:      domain.Stock_Pcs,
-		Stock_Pack:     domain.Stock_Pack,
-		Stock_Roll:     domain.Stock_Roll,
-		Stock_Meter:    domain.Stock_Meter,
+		ID:            domain.ID,
+		CreatedAt:     domain.CreatedAt,
+		UpdatedAt:     domain.UpdatedAt,
+		DeletedAt:     domain.DeletedAt,
+		Stock_Name:    domain.Stock_Name,
+		Stock_Code:    domain.Stock_Code,
+		CategoryID:    domain.CategoryID,
+		UnitsID:       domain.UnitsID,
+		Stock_Total:   domain.Stock_Total,
+		Selling_Price: domain.Selling_Price,
+		// StockID:        domain.StockID,
 	}
 }
