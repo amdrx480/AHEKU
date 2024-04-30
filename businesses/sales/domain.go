@@ -1,4 +1,4 @@
-package stocks
+package sales
 
 import (
 	"context"
@@ -8,31 +8,25 @@ import (
 )
 
 type Domain struct {
-	ID            uint
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt
-	Stock_Name    string
-	Stock_Code    string
-	CategoryName  string
-	CategoryID    uint
-	UnitsID       uint
-	UnitsName     string
-	Stock_Total   int
-	Selling_Price int
+	ID         uint
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt
+	VendorName string
+	VendorID   uint
+	StockName  string
+	StockID    uint
+	Quantity   int
+	// Selling_Price int
+	Total_Price int
 }
 type Usecase interface {
 	GetByID(ctx context.Context, id string) (Domain, error)
-	Create(ctx context.Context, categoryDomain *Domain) (Domain, error)
+	Create(ctx context.Context, salesDomain *Domain) (Domain, error)
 	GetAll(ctx context.Context) ([]Domain, error)
 
-	// DownloadBarcodeByID(ctx context.Context, id string) (Domain, error)
 	// StockIn(ctx context.Context, categoryDomain *Domain, id string) (Domain, error)
 	// StockOut(ctx context.Context, categoryDomain *Domain, id string) (Domain, error)
-
-	// Register(ctx context.Context, userDomain *Domain) (Domain, error)
-	// Login(ctx context.Context, userDomain *Domain) (string, error)
-	// DeleteUser(ctx context.Context, id string) (error)
 }
 
 type Repository interface {

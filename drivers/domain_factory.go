@@ -10,6 +10,9 @@ import (
 	purchasesDomain "backend-golang/businesses/purchases"
 	purchasesDB "backend-golang/drivers/mysql/purchases"
 
+	salesDomain "backend-golang/businesses/sales"
+	salesDB "backend-golang/drivers/mysql/sales"
+
 	vendorsDomain "backend-golang/businesses/vendors"
 	vendorsDB "backend-golang/drivers/mysql/vendors"
 
@@ -32,6 +35,10 @@ func NewStockRepository(conn *gorm.DB) stockDomain.Repository {
 
 func NewPurchasesRepository(conn *gorm.DB) purchasesDomain.Repository {
 	return purchasesDB.NewMySQLRepository(conn)
+}
+
+func NewSalesRepository(conn *gorm.DB) salesDomain.Repository {
+	return salesDB.NewMySQLRepository(conn)
 }
 
 func NewVendorsRepository(conn *gorm.DB) vendorsDomain.Repository {

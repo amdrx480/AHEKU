@@ -21,6 +21,10 @@ func (usecase *categoryUsecase) GetByID(ctx context.Context, id string) (Domain,
 	return usecase.categoryRepository.GetByID(ctx, id)
 }
 
+func (usecase *categoryUsecase) GetByName(ctx context.Context, name string) (Domain, error) {
+	return usecase.categoryRepository.GetByName(ctx, name)
+}
+
 func (usecase *categoryUsecase) Create(ctx context.Context, categoryDomain *Domain) (Domain, error) {
 	return usecase.categoryRepository.Create(ctx, categoryDomain)
 }

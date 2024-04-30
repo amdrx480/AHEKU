@@ -16,7 +16,7 @@ type Units struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	Units     string         `json:"units"`
+	UnitsName string         `json:"units_name" gorm:"unique"`
 }
 
 func (rec *Units) ToDomain() units.Domain {
@@ -25,7 +25,7 @@ func (rec *Units) ToDomain() units.Domain {
 		CreatedAt: rec.CreatedAt,
 		UpdatedAt: rec.UpdatedAt,
 		DeletedAt: rec.DeletedAt,
-		Units:     rec.Units,
+		UnitsName: rec.UnitsName,
 	}
 }
 func FromDomain(domain *units.Domain) *Units {
@@ -34,6 +34,6 @@ func FromDomain(domain *units.Domain) *Units {
 		CreatedAt: domain.CreatedAt,
 		UpdatedAt: domain.UpdatedAt,
 		DeletedAt: domain.DeletedAt,
-		Units:     domain.Units,
+		UnitsName: domain.UnitsName,
 	}
 }

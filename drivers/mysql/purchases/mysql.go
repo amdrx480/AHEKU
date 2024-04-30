@@ -2,11 +2,15 @@ package purchases
 
 import (
 	"backend-golang/businesses/purchases"
+
 	_dbStocks "backend-golang/drivers/mysql/stocks"
+
 	"context"
 
 	// "errors"
+	// _dbCategory "backend-golang/drivers/mysql/category"
 
+	// _dbUnits "backend-golang/drivers/mysql/units"
 	// "fmt"
 
 	"gorm.io/gorm"
@@ -34,6 +38,32 @@ func (pr *purchaseRepository) GetByID(ctx context.Context, id string) (purchases
 }
 
 func (pr *purchaseRepository) Create(ctx context.Context, purchaseDomain *purchases.Domain) (purchases.Domain, error) {
+	// var category _dbCategory.Category
+	// if err := pr.conn.WithContext(ctx).
+	// 	Where("category_name = ?", purchaseDomain.CategoryName).
+	// 	First(&category).Error; err != nil {
+	// 	// Jika Category tidak ditemukan, kembalikan kesalahan
+	// 	if err == gorm.ErrRecordNotFound {
+	// 		return purchases.Domain{}, fmt.Errorf("Category not found: %w", err)
+	// 	}
+	// 	return purchases.Domain{}, fmt.Errorf("Failed to fetch category: %w", err)
+	// }
+	// // Set CategoryID ke stockDomain berdasarkan Category yang ditemukan
+	// purchaseDomain.CategoryID = category.ID
+
+	// var units _dbUnits.Units
+	// if err := pr.conn.WithContext(ctx).
+	// 	Where("units_name = ?", purchaseDomain.UnitsName).
+	// 	First(&units).Error; err != nil {
+	// 	// Jika Units tidak ditemukan, kembalikan kesalahan
+	// 	if err == gorm.ErrRecordNotFound {
+	// 		return purchases.Domain{}, fmt.Errorf("Units not found: %w", err)
+	// 	}
+	// 	return purchases.Domain{}, fmt.Errorf("Failed to fetch Units: %w", err)
+	// }
+	// // Set UnitsID ke stockDomain berdasarkan Units yang ditemukan
+	// purchaseDomain.UnitsID = units.ID
+
 	record := FromDomain(purchaseDomain)
 	result := pr.conn.WithContext(ctx).Create(&record)
 
@@ -46,20 +76,24 @@ func (pr *purchaseRepository) Create(ctx context.Context, purchaseDomain *purcha
 	}
 
 	// Tambahkan atau perbarui stok terkait setelah membuat Purchase
-
 	var stock _dbStocks.Stock
-	// Cari stok berdasarkan kombinasi stock_code dan stock_unit
+	// Cari stok berdasarkan kombinasi stock_code, category_namedan stock_unit
 	err := pr.conn.WithContext(ctx).
-		Where("stock_code = ? AND units_id = ?", record.Stock_Code, record.UnitsID).
+		// Where("stock_code = ? AND category_name = ? AND units_name = ?", record.Stock_Code, record.CategoryName, record.UnitsName).
+		Where("stock_code = ? AND stock_Name = ? AND units_id = ?", record.Stock_Code, record.Stock_Name, record.UnitsID).
 		First(&stock).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// Jika stok belum ada, buat stok baru
 		newStock := _dbStocks.Stock{
-			Stock_Name:    record.Stock_Name,
-			Stock_Code:    record.Stock_Code,
-			CategoryID:    record.CategoryID,
-			UnitsID:       record.UnitsID,
+			Stock_Name: record.Stock_Name,
+			Stock_Code: record.Stock_Code,
+			CategoryID: record.CategoryID,
+			// CategoryName: record.CategoryName,
+
+			UnitsID: record.UnitsID,
+			// UnitsName: record.UnitsName,
+
 			Stock_Total:   record.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
 			Selling_Price: record.Selling_Price,
 		}
@@ -78,19 +112,34 @@ func (pr *purchaseRepository) Create(ctx context.Context, purchaseDomain *purcha
 }
 
 func (sr *purchaseRepository) GetAll(ctx context.Context) ([]purchases.Domain, error) {
+	// var records []Purchase
+	// if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {
+	// 	return nil, err
+	// }
+	// Memuat data Purchase beserta relasi Vendor, Category, dan Units
 	var records []Purchase
-	if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {
+	if err := sr.conn.WithContext(ctx).
+		Preload("Vendor").Preload("Category").Preload("Units").
+		Find(&records).Error; err != nil {
 		return nil, err
 	}
 
-	categories := []purchases.Domain{}
+	purchasesDomain := []purchases.Domain{}
 
-	for _, category := range records {
-		domain := category.ToDomain()
-		categories = append(categories, domain)
+	for _, purchase := range records {
+		// Konversi ke domain
+		domain := purchase.ToDomain()
+
+		// Tambahkan nama Vendor, Category, dan Units ke domain
+		// domain.VendorName = purchases.Vendor.Name            // Nama vendor
+		// domain.CategoryName = purchase.Category.CategoryName // Nama kategori
+		// domain.UnitsName = purchase.Units.Units              // Nama unit
+
+		// Tambahkan ke hasil
+		purchasesDomain = append(purchasesDomain, domain)
 	}
 
-	return categories, nil
+	return purchasesDomain, nil
 }
 
 // func (ur *purchaseRepository) DownloadBarcodeByID(ctx context.Context, id string) (purchase.Domain, error) {

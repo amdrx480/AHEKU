@@ -32,6 +32,17 @@ func (cr *categoryRepository) GetByID(ctx context.Context, id string) (category.
 
 }
 
+func (cr *categoryRepository) GetByName(ctx context.Context, name string) (category.Domain, error) {
+	var categories Category
+
+	if err := cr.conn.WithContext(ctx).First(&categories, "category_name = ?", name).Error; err != nil {
+		return category.Domain{}, err
+	}
+
+	return categories.ToDomain(), nil
+
+}
+
 func (cr *categoryRepository) Create(ctx context.Context, categoryDomain *category.Domain) (category.Domain, error) {
 	record := FromDomain(categoryDomain)
 	result := cr.conn.WithContext(ctx).Create(&record)

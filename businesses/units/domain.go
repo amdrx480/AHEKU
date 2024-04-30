@@ -12,7 +12,7 @@ type Domain struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt
-	Units     string
+	UnitsName string
 }
 type Usecase interface {
 	GetByID(ctx context.Context, id string) (Domain, error)

@@ -12,16 +12,17 @@ type Domain struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      gorm.DeletedAt
+	VendorName     string
 	VendorID       uint
 	Stock_Name     string
 	Stock_Code     string
 	CategoryName   string
 	CategoryID     uint
 	UnitsID        uint
+	UnitsName      string
 	Quantity       int
 	Purchase_Price int
 	Selling_Price  int
-	// StockID        uint
 }
 type Usecase interface {
 	GetByID(ctx context.Context, id string) (Domain, error)

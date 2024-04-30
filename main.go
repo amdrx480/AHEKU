@@ -21,6 +21,9 @@ import (
 	_purchasesUseCase "backend-golang/businesses/purchases"
 	_purchasesController "backend-golang/controllers/purchases"
 
+	_salesUseCase "backend-golang/businesses/sales"
+	_salesController "backend-golang/controllers/sales"
+
 	_vendorsUseCase "backend-golang/businesses/vendors"
 	_vendorsController "backend-golang/controllers/vendors"
 
@@ -51,9 +54,15 @@ func main() {
 
 	db := configDB.InitDB()
 
+	// _dbDriver.ModifyTableCollation(db)
+
+	_dbDriver.SeedAdminData(db)
 	_dbDriver.SeedVendorsData(db)
 	_dbDriver.SeedCategoryData(db)
 	_dbDriver.SeedUnitsData(db)
+	_dbDriver.SeedPurchasesData(db)
+
+	// _dbDriver.SeedStocksData(db)
 
 	_dbDriver.MigrateDB(db)
 
@@ -80,6 +89,10 @@ func main() {
 	purchasesUsecase := _purchasesUseCase.NewPurchasesUseCase(purchasesRepo, &configJWT)
 	purchasesCtrl := _purchasesController.NewPurchasesController(purchasesUsecase)
 
+	salesRepo := _driverFactory.NewSalesRepository(db)
+	salesUsecase := _salesUseCase.NewSalesUseCase(salesRepo, &configJWT)
+	salesCtrl := _salesController.NewSalesController(salesUsecase)
+
 	vendorsRepo := _driverFactory.NewVendorsRepository(db)
 	vendorsUsecase := _vendorsUseCase.NewVendorsUseCase(vendorsRepo, &configJWT)
 	vendorsCtrl := _vendorsController.NewVendorsController(vendorsUsecase)
@@ -99,9 +112,11 @@ func main() {
 
 		StocksController:    *stockCtrl,
 		PurchasesController: *purchasesCtrl,
-		VendorsController:   *vendorsCtrl,
-		CategoryController:  *categoryCtrl,
-		UnitsController:     *unitsCtrl,
+		SalesController:     *salesCtrl,
+
+		VendorsController:  *vendorsCtrl,
+		CategoryController: *categoryCtrl,
+		UnitsController:    *unitsCtrl,
 	}
 
 	routesInit.RegisterRoutes(e)

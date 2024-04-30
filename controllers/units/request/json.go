@@ -7,12 +7,12 @@ import (
 )
 
 type Units struct {
-	Units string `json:"units"`
+	UnitsName string `json:"units_name"`
 }
 
 func (req *Units) ToDomain() *units.Domain {
 	return &units.Domain{
-		Units: req.Units,
+		UnitsName: req.UnitsName,
 	}
 }
 

@@ -9,8 +9,10 @@ import (
 type Stock struct {
 	Stock_Name    string `json:"stock_name"`
 	Stock_Code    string `json:"stock_code"`
+	CategoryName  string `json:"category_name"`
 	CategoryID    uint   `json:"category_id"`
 	UnitsID       uint   `json:"units_id"`
+	UnitsName     string `json:"units_name"`
 	Stock_Total   int    `json:"stock_total"`
 	Selling_Price int    `json:"selling_price"`
 }
@@ -20,6 +22,7 @@ func (req *Stock) ToDomain() *stocks.Domain {
 		Stock_Name:    req.Stock_Name,
 		Stock_Code:    req.Stock_Code,
 		CategoryID:    req.CategoryID,
+		CategoryName:  req.CategoryName,
 		UnitsID:       req.UnitsID,
 		Stock_Total:   req.Stock_Total,
 		Selling_Price: req.Selling_Price,

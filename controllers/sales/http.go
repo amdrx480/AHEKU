@@ -1,56 +1,42 @@
-package category
+package sales
 
 import (
-	"backend-golang/businesses/category"
+	"backend-golang/businesses/sales"
 
 	"backend-golang/controllers"
-	"backend-golang/controllers/category/request"
-	"backend-golang/controllers/category/response"
+	"backend-golang/controllers/sales/request"
+	"backend-golang/controllers/sales/response"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-type CategoryController struct {
-	categoryUseCase category.Usecase
+type SalesController struct {
+	salesUseCase sales.Usecase
 }
 
-func NewCategoryController(authUC category.Usecase) *CategoryController {
-	return &CategoryController{
-		categoryUseCase: authUC,
+func NewSalesController(authUC sales.Usecase) *SalesController {
+	return &SalesController{
+		salesUseCase: authUC,
 	}
 }
 
-func (cc *CategoryController) GetByID(c echo.Context) error {
+func (sc *SalesController) GetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	categoryID := c.Param("id")
+	salesID := c.Param("id")
 
-	category, err := cc.categoryUseCase.GetByID(ctx, categoryID)
-
-	if err != nil {
-		return controllers.NewResponse(c, http.StatusNotFound, true, "category not found", "")
-	}
-
-	return controllers.NewResponse(c, http.StatusOK, false, "category found", response.FromDomain(category))
-}
-
-func (cc *CategoryController) GetByName(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	categoryName := c.Param("category_name")
-
-	category, err := cc.categoryUseCase.GetByName(ctx, categoryName)
+	sales, err := sc.salesUseCase.GetByID(ctx, salesID)
 
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusNotFound, true, "categoryName not found", "")
+		return controllers.NewResponse(c, http.StatusNotFound, true, "sales not found", "")
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "categoryName found", response.FromDomain(category))
+	return controllers.NewResponse(c, http.StatusOK, false, "sales found", response.FromDomain(sales))
 }
 
-func (pc *CategoryController) Create(c echo.Context) error {
-	input := request.Category{}
+func (sc *SalesController) Create(c echo.Context) error {
+	input := request.Sales{}
 	ctx := c.Request().Context()
 
 	if err := c.Bind(&input); err != nil {
@@ -63,31 +49,31 @@ func (pc *CategoryController) Create(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	category, err := pc.categoryUseCase.Create(ctx, input.ToDomain())
+	sales, err := sc.salesUseCase.Create(ctx, input.ToDomain())
 
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a category", "")
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a sales", "")
 	}
 
-	return controllers.NewResponse(c, http.StatusCreated, false, "category registered", response.FromDomain(category))
+	return controllers.NewResponse(c, http.StatusCreated, false, "sales registered", response.FromDomain(sales))
 }
 
-func (pc *CategoryController) GetAll(c echo.Context) error {
+func (sc *SalesController) GetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	categoryData, err := pc.categoryUseCase.GetAll(ctx)
+	salesData, err := sc.salesUseCase.GetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
 	}
 
-	categories := []response.Category{}
+	salesResponse := []response.Sales{}
 
-	for _, category := range categoryData {
-		categories = append(categories, response.FromDomain(category))
+	for _, sales := range salesData {
+		salesResponse = append(salesResponse, response.FromDomain(sales))
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "all category", categories)
+	return controllers.NewResponse(c, http.StatusOK, false, "all sales", salesResponse)
 }
 
 // func (cc *StockController) DownloadBarcodeByID(c echo.Context) error {

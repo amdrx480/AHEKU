@@ -4,6 +4,10 @@ import (
 	"backend-golang/businesses/stocks"
 	"context"
 
+	// "fmt"
+
+	// _dbCategory "backend-golang/drivers/mysql/category"
+
 	"gorm.io/gorm"
 )
 
@@ -29,6 +33,21 @@ func (ur *stockRepository) GetByID(ctx context.Context, id string) (stocks.Domai
 }
 
 func (cr *stockRepository) Create(ctx context.Context, stockDomain *stocks.Domain) (stocks.Domain, error) {
+
+	// // Cari Category berdasarkan CategoryName yang diberikan
+	// var category _dbCategory.Category
+	// if err := cr.conn.WithContext(ctx).Where("category_name = ?", stockDomain.CategoryName).First(&category).Error; err != nil {
+	// 	// Jika Category tidak ditemukan, kembalikan kesalahan
+	// 	if err == gorm.ErrRecordNotFound {
+	// 		return stocks.Domain{}, fmt.Errorf("Category not found: %w", err)
+	// 	}
+	// 	return stocks.Domain{}, fmt.Errorf("Failed to fetch category: %w", err)
+	// }
+
+	// // Set CategoryID ke stockDomain berdasarkan Category yang ditemukan
+	// stockDomain.CategoryID = category.ID
+	// // stockDomain.CategoryName = category.CategoryName
+
 	record := FromDomain(stockDomain)
 	result := cr.conn.WithContext(ctx).Create(&record)
 
@@ -45,19 +64,25 @@ func (cr *stockRepository) Create(ctx context.Context, stockDomain *stocks.Domai
 }
 
 func (sr *stockRepository) GetAll(ctx context.Context) ([]stocks.Domain, error) {
+	// var records []Stock
+	// if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {
+	// 	return nil, err
+	// }
 	var records []Stock
-	if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {
+	if err := sr.conn.WithContext(ctx).
+		Preload("Category").Preload("Units").
+		Find(&records).Error; err != nil {
 		return nil, err
 	}
 
-	categories := []stocks.Domain{}
+	stocksDomain := []stocks.Domain{}
 
-	for _, category := range records {
-		domain := category.ToDomain()
-		categories = append(categories, domain)
+	for _, stocks := range records {
+		domain := stocks.ToDomain()
+		stocksDomain = append(stocksDomain, domain)
 	}
 
-	return categories, nil
+	return stocksDomain, nil
 }
 
 // func (ur *stockRepository) DownloadBarcodeByID(ctx context.Context, id string) (stocks.Domain, error) {

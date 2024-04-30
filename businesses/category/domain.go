@@ -16,6 +16,8 @@ type Domain struct {
 }
 type Usecase interface {
 	GetByID(ctx context.Context, id string) (Domain, error)
+	GetByName(ctx context.Context, name string) (Domain, error)
+
 	Create(ctx context.Context, categoryDomain *Domain) (Domain, error)
 	GetAll(ctx context.Context) ([]Domain, error)
 	// Delete(ctx context.Context, id string) error
@@ -23,6 +25,8 @@ type Usecase interface {
 
 type Repository interface {
 	GetByID(ctx context.Context, id string) (Domain, error)
+	GetByName(ctx context.Context, name string) (Domain, error)
+
 	Create(ctx context.Context, vendorsDomain *Domain) (Domain, error)
 	GetAll(ctx context.Context) ([]Domain, error)
 	// Delete(ctx context.Context, id string) error

@@ -16,7 +16,7 @@ type Category struct {
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	CategoryName string         `json:"name"`
+	CategoryName string         `json:"category_name" gorm:"unique"`
 }
 
 func (rec *Category) ToDomain() category.Domain {
