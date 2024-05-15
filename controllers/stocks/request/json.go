@@ -7,14 +7,16 @@ import (
 )
 
 type Stock struct {
-	Stock_Name    string `json:"stock_name"`
-	Stock_Code    string `json:"stock_code"`
-	CategoryName  string `json:"category_name"`
-	CategoryID    uint   `json:"category_id"`
-	UnitsID       uint   `json:"units_id"`
-	UnitsName     string `json:"units_name"`
-	Stock_Total   int    `json:"stock_total"`
-	Selling_Price int    `json:"selling_price"`
+	Stock_Name    string `json:"stock_name" form:"stock_name"`
+	Stock_Code    string `json:"stock_code" form:"stock_code"`
+	CategoryName  string `json:"category_name" form:"category_name"`
+	CategoryID    uint   `json:"category_id" form:"category_id"`
+	UnitsID       uint   `json:"units_id" form:"units_id"`
+	UnitsName     string `json:"units_name" form:"units_name"`
+	Description   string `json:"description" form:"description"`
+	Image_Path    string `json:"image_path" form:"image_path"`
+	Stock_Total   int    `json:"stock_total" form:"stock_total"`
+	Selling_Price int    `json:"selling_price" form:"selling_price"`
 }
 
 func (req *Stock) ToDomain() *stocks.Domain {
@@ -24,6 +26,8 @@ func (req *Stock) ToDomain() *stocks.Domain {
 		CategoryID:    req.CategoryID,
 		CategoryName:  req.CategoryName,
 		UnitsID:       req.UnitsID,
+		Description:   req.Description,
+		Image_Path:    req.Image_Path,
 		Stock_Total:   req.Stock_Total,
 		Selling_Price: req.Selling_Price,
 	}

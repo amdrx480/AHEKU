@@ -29,6 +29,10 @@ type Stock struct {
 	UnitsID   uint        `json:"units_id"`
 	UnitsName string      `json:"units_name"`
 
+	Description string `json:"description"`
+
+	Image_Path string `json:"image_path"`
+
 	Stock_Total   int `json:"stock_total"`
 	Selling_Price int `json:"selling_price"`
 }
@@ -51,6 +55,7 @@ func (rec *Stock) ToDomain() stocks.Domain {
 		// Tambahkan nama entitas terkait ke domain
 		CategoryName: rec.Category.CategoryName, // Nama kategori
 		UnitsName:    rec.Units.UnitsName,       // Nama unit
+		Description:  rec.Description,
 	}
 }
 func FromDomain(domain *stocks.Domain) *Stock {
@@ -67,6 +72,7 @@ func FromDomain(domain *stocks.Domain) *Stock {
 		CategoryName:  domain.CategoryName,
 		UnitsID:       domain.UnitsID,
 		UnitsName:     domain.UnitsName,
+		Description:   domain.Description,
 		Stock_Total:   domain.Stock_Total,
 		Selling_Price: domain.Selling_Price,
 		// StockID:        domain.StockID,

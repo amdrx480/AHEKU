@@ -19,6 +19,7 @@ type Stock struct {
 	CategoryID    uint           `json:"category_id"`
 	UnitsID       uint           `json:"units_id"`
 	UnitsName     string         `json:"units_name"`
+	Description   string         `json:"description"`
 	Stock_Total   int            `json:"stock_total"`
 	Selling_Price int            `json:"selling_price"`
 }
@@ -35,6 +36,7 @@ func FromDomain(domain stocks.Domain) Stock {
 		CategoryID:    domain.CategoryID,
 		UnitsName:     domain.UnitsName,
 		UnitsID:       domain.UnitsID,
+		Description:   domain.Description,
 		Stock_Total:   domain.Stock_Total,
 		Selling_Price: domain.Selling_Price,
 	}

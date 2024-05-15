@@ -9,7 +9,7 @@ import (
 	"backend-golang/drivers/mysql/stocks"
 
 	// "backend-golang/drivers/mysql/units"
-	"backend-golang/drivers/mysql/vendors"
+	// "backend-golang/drivers/mysql/vendors"
 
 	"time"
 
@@ -17,16 +17,18 @@ import (
 )
 
 type Sales struct {
-	ID          uint            `json:"id" gorm:"primaryKey"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt  `json:"deleted_at" gorm:"index"`
-	Vendor      vendors.Vendors `json:"-" gorm:"foreignKey:vendor_id"`
-	VendorID    uint            `json:"vendor_id"`
-	Stock       stocks.Stock    `json:"-" gorm:"foreignKey:stock_id"`
-	StockID     uint            `json:"stock_id"`
-	Quantity    int             `json:"quantity"`
-	Total_Price int             `json:"total_price"`
+	ID        uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+	// Vendor    vendors.Vendors `json:"-" gorm:"foreignKey:vendor_id"`
+	// VendorID  uint            `json:"vendor_id"`
+	Stock   stocks.Stock `json:"-" gorm:"foreignKey:stock_id"`
+	StockID uint         `json:"stock_id"`
+	// StockName   string          `json:"stock_name"`
+	Quantity      int `json:"quantity"`
+	TotalPrice    int `json:"total_price"`
+	TotalAllPrice int `json:"total_all_price"`
 }
 
 func (rec *Sales) ToDomain() sales.Domain {
@@ -35,25 +37,27 @@ func (rec *Sales) ToDomain() sales.Domain {
 		CreatedAt: rec.CreatedAt,
 		UpdatedAt: rec.UpdatedAt,
 		DeletedAt: rec.DeletedAt,
-		VendorID:  rec.VendorID,
-		StockID:   rec.StockID,
-		Quantity:  rec.Quantity,
+		// VendorID:  rec.VendorID,
+		StockID:  rec.StockID,
+		Quantity: rec.Quantity,
 		// Tambahkan nama entitas terkait ke domain
-		Total_Price: rec.Total_Price,
-		VendorName:  rec.Vendor.Vendor_Name, // Nama vendor
-		StockName:   rec.Stock.Stock_Name,   // Nama Stock
+		TotalPrice:    rec.TotalPrice,
+		TotalAllPrice: rec.TotalAllPrice,
+		// VendorName:  rec.Vendor.Vendor_Name, // Nama vendor
+		StockName: rec.Stock.Stock_Name, // Nama Stock
 
 	}
 }
 func FromDomain(domain *sales.Domain) *Sales {
 	return &Sales{
-		ID:          domain.ID,
-		CreatedAt:   domain.CreatedAt,
-		UpdatedAt:   domain.UpdatedAt,
-		DeletedAt:   domain.DeletedAt,
-		VendorID:    domain.VendorID,
-		StockID:     domain.StockID,
-		Quantity:    domain.Quantity,
-		Total_Price: domain.Total_Price,
+		ID:        domain.ID,
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		// VendorID:    domain.VendorID,
+		StockID:       domain.StockID,
+		Quantity:      domain.Quantity,
+		TotalPrice:    domain.TotalPrice,
+		TotalAllPrice: domain.TotalAllPrice,
 	}
 }

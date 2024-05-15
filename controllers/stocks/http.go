@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	// "github.com/skip2/go-qrcode"
+	// "fmt"
 
 	"github.com/labstack/echo/v4"
 )
@@ -59,6 +60,76 @@ func (sc *StockController) Create(c echo.Context) error {
 
 	return controllers.NewResponse(c, http.StatusCreated, false, "stock registered", response.FromDomain(stock))
 }
+
+// func (sc *StockController) Create(c echo.Context) error {
+// 	stockInput := request.Stock{}
+// 	ctx := c.Request().Context()
+
+// 	stockID := c.Param("id")
+// 	file, err := c.FormFile("image")
+
+// 	if err != nil {
+
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "error handling file upload", "")
+// 	}
+
+// 	// Coba unggah gambar jika ada file yang disertakan dalam permintaan
+// 	src, err := file.Open()
+// 	if err != nil {
+// 		fmt.Println("Unable to open file:", err.Error())
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Unable to open file", "")
+// 	}
+// 	defer src.Close()
+
+// 	imagePath := file.Filename
+// 	// Panggil UploadStocksImage untuk mengunggah gambar
+
+// 	stock, _, err := sc.stockUseCase.Create(ctx, stockInput.ToDomain(), imagePath, stockID)
+
+// 	if err != nil {
+// 		fmt.Println("Unable to upload image:", err.Error())
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusCreated, false, "stock registered", response.FromDomain(stock))
+// }
+
+// func (sc *StockController) UploadStocksImage(c echo.Context) error {
+// 	profileInput := request.Stock{}
+// 	ctx := c.Request().Context()
+
+// 	stockID := c.Param("id")
+// 	file, err := c.FormFile("image")
+
+// 	if err != nil {
+
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "error handling file upload", "")
+// 		// return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	}
+
+// 	src, err := file.Open()
+// 	if err != nil {
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Unable to open file", "")
+// 	}
+// 	defer src.Close()
+
+// 	imagePath := file.Filename
+// 	stock, _, err := sc.stockUseCase.UploadStocksImage(ctx, profileInput.ToDomain(), imagePath, stockID)
+
+// 	if err != nil {
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "customer profile image updated", stock)
+// }
 
 func (sc *StockController) GetAll(c echo.Context) error {
 	ctx := c.Request().Context()

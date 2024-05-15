@@ -33,6 +33,8 @@ type Purchase struct {
 	UnitsID   uint        `json:"units_id"`
 	UnitsName string      `json:"units_name"`
 
+	Description string `json:"description"`
+
 	Quantity       int `json:"quantity"`
 	Purchase_Price int `json:"purchase_price"`
 	Selling_Price  int `json:"selling_price"`
@@ -51,6 +53,7 @@ func (rec *Purchase) ToDomain() purchases.Domain {
 		CategoryID: rec.CategoryID,
 
 		UnitsID:        rec.UnitsID,
+		Description:    rec.Description,
 		Quantity:       rec.Quantity,
 		Purchase_Price: rec.Purchase_Price,
 		Selling_Price:  rec.Selling_Price,
@@ -74,6 +77,7 @@ func FromDomain(domain *purchases.Domain) *Purchase {
 		// CategoryName:   domain.CategoryName,
 		UnitsID:        domain.UnitsID,
 		UnitsName:      domain.UnitsName,
+		Description:    domain.Description,
 		Quantity:       domain.Quantity,
 		Purchase_Price: domain.Purchase_Price,
 		Selling_Price:  domain.Selling_Price,

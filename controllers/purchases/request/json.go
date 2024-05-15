@@ -14,6 +14,7 @@ type Purchases struct {
 	CategoryID     uint   `json:"category_id"`
 	UnitsID        uint   `json:"units_id"`
 	UnitsName      string `json:"units_name"`
+	Description    string `json:"description"`
 	Quantity       int    `json:"quantity"`
 	Purchase_Price int    `json:"purchase_price"`
 	Selling_Price  int    `json:"selling_price"`
@@ -28,6 +29,7 @@ func (req *Purchases) ToDomain() *purchases.Domain {
 		CategoryName:   req.CategoryName,
 		UnitsID:        req.UnitsID,
 		UnitsName:      req.UnitsName,
+		Description:    req.Description,
 		Quantity:       req.Quantity,
 		Purchase_Price: req.Purchase_Price,
 		Selling_Price:  req.Selling_Price,

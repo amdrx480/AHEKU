@@ -29,6 +29,10 @@ func (usecase *stockUsecase) Create(ctx context.Context, stockDomain *Domain) (D
 	return usecase.stockRepository.Create(ctx, stockDomain)
 }
 
+// func (usecase *stockUsecase) Create(ctx context.Context, stockDomain *Domain, imagePath string, id string) (Domain, string, error) {
+// 	return usecase.stockRepository.Create(ctx, stockDomain, imagePath, id)
+// }
+
 func (usecase *stockUsecase) GetAll(ctx context.Context) ([]Domain, error) {
 	return usecase.stockRepository.GetAll(ctx)
 }

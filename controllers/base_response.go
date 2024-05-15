@@ -16,6 +16,11 @@ type Response[T any] struct {
 	Data    T      `json:"token"`
 }
 
+type ResponseWithoutData struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+}
+
 // type ResponseLogin struct {
 // 	Error       bool        `json:"error"`
 // 	Message     string      `json:"message"`
@@ -27,6 +32,14 @@ func NewResponse[T any](c echo.Context, statusCode int, statusError bool, messag
 		Error:   statusError,
 		Message: message,
 		Data:    data,
+	})
+}
+
+func NewResponseWithoutData(c echo.Context, statusCode int, statusError bool, message string) error {
+	return c.JSON(statusCode, ResponseWithoutData{
+		Error:   statusError,
+		Message: message,
+		// Data:    data,
 	})
 }
 

@@ -22,6 +22,9 @@ import (
 	unitsDomain "backend-golang/businesses/units"
 	unitsDB "backend-golang/drivers/mysql/units"
 
+	historyDomain "backend-golang/businesses/history"
+	historyDB "backend-golang/drivers/mysql/history"
+
 	"gorm.io/gorm"
 )
 
@@ -51,4 +54,8 @@ func NewCategoryRepository(conn *gorm.DB) categoryDomain.Repository {
 
 func NewUnitsRepository(conn *gorm.DB) unitsDomain.Repository {
 	return unitsDB.NewMySQLRepository(conn)
+}
+
+func NewHistoryRepository(conn *gorm.DB) historyDomain.Repository {
+	return historyDB.NewMySQLRepository(conn)
 }

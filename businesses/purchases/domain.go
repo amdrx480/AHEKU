@@ -20,6 +20,7 @@ type Domain struct {
 	CategoryID     uint
 	UnitsID        uint
 	UnitsName      string
+	Description    string
 	Quantity       int
 	Purchase_Price int
 	Selling_Price  int

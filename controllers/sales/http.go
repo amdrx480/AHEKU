@@ -6,6 +6,10 @@ import (
 	"backend-golang/controllers"
 	"backend-golang/controllers/sales/request"
 	"backend-golang/controllers/sales/response"
+
+	_reqHistory "backend-golang/controllers/history/request"
+	// _resHistory "backend-golang/controllers/history/response"
+
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -58,6 +62,34 @@ func (sc *SalesController) Create(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "sales registered", response.FromDomain(sales))
 }
 
+func (sc *SalesController) ToHistory(c echo.Context) error {
+	historyID := c.Param("id")
+	input := _reqHistory.History{}
+	ctx := c.Request().Context()
+
+	if err := c.Bind(&input); err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	err := input.Validate()
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	// history, err := sc.salesUseCase.ToHistory(ctx, input.ToDomain(), historyID)
+	_, err = sc.salesUseCase.ToHistory(ctx, input.ToDomain(), historyID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Missing cart data", "")
+	}
+
+	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", _resHistory.FromDomain(history))
+	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", " ")
+	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "Success ToHistory Data")
+
+}
+
 func (sc *SalesController) GetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -74,6 +106,19 @@ func (sc *SalesController) GetAll(c echo.Context) error {
 	}
 
 	return controllers.NewResponse(c, http.StatusOK, false, "all sales", salesResponse)
+}
+
+func (sc *SalesController) Delete(c echo.Context) error {
+	categoryID := c.Param("id")
+	ctx := c.Request().Context()
+
+	err := sc.salesUseCase.Delete(ctx, categoryID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, false, "failed to delete a sales", "")
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "sales deleted", "")
 }
 
 // func (cc *StockController) DownloadBarcodeByID(c echo.Context) error {

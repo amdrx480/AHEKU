@@ -2,6 +2,7 @@ package mysql_driver
 
 import (
 	"backend-golang/drivers/mysql/category"
+	"backend-golang/drivers/mysql/history"
 	"backend-golang/drivers/mysql/purchases"
 	"backend-golang/drivers/mysql/sales"
 	"backend-golang/drivers/mysql/units"
@@ -48,7 +49,7 @@ func (config *DBConfig) InitDB() *gorm.DB {
 }
 
 func MigrateDB(db *gorm.DB) {
-	err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &purchases.Purchase{}, &sales.Sales{}, &vendors.Vendors{}, &category.Category{}, &units.Units{})
+	err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &purchases.Purchase{}, &sales.Sales{}, &vendors.Vendors{}, &category.Category{}, &units.Units{}, &history.History{})
 	// err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &sales.Sales{}, &vendors.Vendors{}, &category.Category{}, &units.Units{})
 
 	if err != nil {
@@ -184,12 +185,6 @@ func SeedUnitsData(db *gorm.DB) error {
 }
 
 func SeedPurchasesData(db *gorm.DB) error {
-	// Siapkan lima contoh data untuk tabel purchases
-	// {CategoryName: "Kabel"},
-	// {CategoryName: "Lampu"},
-	// {CategoryName: "Contactor"},
-	// {CategoryName: "MCB"},
-	// {CategoryName: "Inverter"},
 	purchasesData := []purchases.Purchase{
 		{
 			VendorID:   1, // Pastikan vendor ini ada di tabel vendors
@@ -199,6 +194,7 @@ func SeedPurchasesData(db *gorm.DB) error {
 			// CategoryName:   "Kabel",
 			UnitsID:        1, // Pastikan unit ini ada di tabel units
 			UnitsName:      "Pcs",
+			Description:    "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
 			Quantity:       50,   // Jumlah yang dibeli
 			Purchase_Price: 500,  // Harga beli
 			Selling_Price:  1000, // Harga jual
@@ -209,8 +205,10 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "B001",
 			CategoryID: 2, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Lampu",
-			UnitsID:        2, // Pastikan unit ini ada di tabel units
-			UnitsName:      "Pack",
+			UnitsID:     2, // Pastikan unit ini ada di tabel units
+			UnitsName:   "Pack",
+			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+
 			Quantity:       75,   // Jumlah yang dibeli
 			Purchase_Price: 750,  // Harga beli
 			Selling_Price:  2000, // Harga jual
@@ -221,8 +219,10 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "C001",
 			CategoryID: 3, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Contactor",
-			UnitsID:        3, // Pastikan unit ini ada di tabel units
-			UnitsName:      "Roll",
+			UnitsID:     3, // Pastikan unit ini ada di tabel units
+			UnitsName:   "Roll",
+			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+
 			Quantity:       60,   // Jumlah yang dibeli
 			Purchase_Price: 600,  // Harga beli
 			Selling_Price:  1500, // Harga jual
@@ -233,8 +233,10 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "D001",
 			CategoryID: 4, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "MCB",
-			UnitsID:        4, // Pastikan unit ini ada di tabel units
-			UnitsName:      "Meter",
+			UnitsID:     4, // Pastikan unit ini ada di tabel units
+			UnitsName:   "Meter",
+			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+
 			Quantity:       80,   // Jumlah yang dibeli
 			Purchase_Price: 800,  // Harga beli
 			Selling_Price:  3000, // Harga jual
@@ -245,8 +247,9 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "E001",
 			CategoryID: 5, // Pastikan kategori ini ada di tabel categories
 			// CategoryName: "Inverter",
-			UnitsID:   1, // Pastikan unit ini ada di tabel units
-			UnitsName: "Pcs",
+			UnitsID:     1, // Pastikan unit ini ada di tabel units
+			UnitsName:   "Pcs",
+			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
 
 			Quantity:       70,   // Jumlah yang dibeli
 			Purchase_Price: 700,  // Harga beli
@@ -275,19 +278,21 @@ func SeedPurchasesData(db *gorm.DB) error {
 				CategoryID:    purchase.CategoryID,
 				UnitsID:       purchase.UnitsID,
 				UnitsName:     purchase.UnitsName,
+				Description:   purchase.Description,
 				Stock_Total:   purchase.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
 				Selling_Price: purchase.Selling_Price,
 			}
 			db.Create(&newStock)
-		} else if err == nil {
-			// Jika stok sudah ada, perbarui stok total
-			stock.Stock_Total += purchase.Quantity // Tambahkan jumlah yang dibeli ke stok total
-			db.Save(&stock)
 		} else {
 			// Jika ada kesalahan lain, kembalikan error
 			return err
 		}
 	}
+	// else if err == nil {
+	// 	// Jika stok sudah ada, perbarui stok total
+	// 	stock.Stock_Total += purchase.Quantity // Tambahkan jumlah yang dibeli ke stok total
+	// 	db.Save(&stock)
+	// }
 
 	// Log pesan sukses
 	log.Println("Purchases data seeded")
@@ -348,7 +353,7 @@ func SeedStocksData(db *gorm.DB) error {
 		},
 	}
 
-	var record units.Units
+	var record stocks.Stock
 	_ = db.First(&record)
 
 	if record.ID != 0 {

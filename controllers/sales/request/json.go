@@ -7,7 +7,7 @@ import (
 )
 
 type Sales struct {
-	VendorID uint `json:"vendor_id"`
+	// VendorID uint `json:"vendor_id"`
 	StockID  uint `json:"stock_id"`
 	Quantity int  `json:"quantity"`
 	// Selling_Price int  `json:"selling_price"`
@@ -15,7 +15,7 @@ type Sales struct {
 
 func (req *Sales) ToDomain() *sales.Domain {
 	return &sales.Domain{
-		VendorID: req.VendorID,
+		// VendorID: req.VendorID,
 		StockID:  req.StockID,
 		Quantity: req.Quantity,
 		// Selling_Price: req.Selling_Price,

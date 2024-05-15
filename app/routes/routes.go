@@ -12,6 +12,8 @@ import (
 	stocks "backend-golang/controllers/stocks"
 	vendors "backend-golang/controllers/vendors"
 
+	history "backend-golang/controllers/history"
+
 	"backend-golang/controllers/users"
 
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -30,6 +32,7 @@ type ControllerList struct {
 	VendorsController  vendors.VendorsController
 	CategoryController category.CategoryController
 	UnitsController    units.UnitsController
+	HistoryController  history.HistoryController
 }
 
 func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
@@ -46,6 +49,7 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	stocks := e.Group("stocks")
 	stocks.GET("/:id", cl.StocksController.GetByID)
 	stocks.POST("", cl.StocksController.Create)
+	// users.PUT("/profiles/picture/:id", cl.ProfilesController.UploadProfileImage)
 	stocks.GET("", cl.StocksController.GetAll)
 
 	// purchases := e.Group("purchases", echojwt.WithConfig(cl.JWTMiddleware))
@@ -57,7 +61,9 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	sales := e.Group("sales")
 	sales.GET("/:id", cl.SalesController.GetByID)
 	sales.POST("", cl.SalesController.Create)
+	sales.POST("/to_history", cl.SalesController.ToHistory)
 	sales.GET("", cl.SalesController.GetAll)
+	sales.DELETE("/:id", cl.SalesController.Delete)
 
 	// vendors := e.Group("vendors", echojwt.WithConfig(cl.JWTMiddleware))
 	vendors := e.Group("vendors")

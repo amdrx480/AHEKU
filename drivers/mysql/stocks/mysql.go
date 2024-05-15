@@ -63,6 +63,39 @@ func (cr *stockRepository) Create(ctx context.Context, stockDomain *stocks.Domai
 
 }
 
+// func (cr *stockRepository) Create(ctx context.Context, stockDomain *stocks.Domain, imagePath string, id string) (stocks.Domain, string, error) {
+
+// 	// // Cari Category berdasarkan CategoryName yang diberikan
+// 	// var category _dbCategory.Category
+// 	// if err := cr.conn.WithContext(ctx).Where("category_name = ?", stockDomain.CategoryName).First(&category).Error; err != nil {
+// 	// 	// Jika Category tidak ditemukan, kembalikan kesalahan
+// 	// 	if err == gorm.ErrRecordNotFound {
+// 	// 		return stocks.Domain{}, fmt.Errorf("Category not found: %w", err)
+// 	// 	}
+// 	// 	return stocks.Domain{}, fmt.Errorf("Failed to fetch category: %w", err)
+// 	// }
+
+// 	// // Set CategoryID ke stockDomain berdasarkan Category yang ditemukan
+// 	// stockDomain.CategoryID = category.ID
+// 	// // stockDomain.CategoryName = category.CategoryName
+
+// 	record := FromDomain(stockDomain)
+// 	result := cr.conn.WithContext(ctx).Create(&record)
+
+// 	if err := result.Error; err != nil {
+// 		return stocks.Domain{}, "", err
+// 	}
+
+// 	imagePath = record.Image_Path
+
+// 	if err := result.Last(&record).Error; err != nil {
+// 		return stocks.Domain{}, "", err
+// 	}
+
+// 	return record.ToDomain(), imagePath, nil
+
+// }
+
 func (sr *stockRepository) GetAll(ctx context.Context) ([]stocks.Domain, error) {
 	// var records []Stock
 	// if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {

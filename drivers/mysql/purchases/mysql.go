@@ -80,6 +80,8 @@ func (pr *purchaseRepository) Create(ctx context.Context, purchaseDomain *purcha
 	// Cari stok berdasarkan kombinasi stock_code, category_namedan stock_unit
 	err := pr.conn.WithContext(ctx).
 		// Where("stock_code = ? AND category_name = ? AND units_name = ?", record.Stock_Code, record.CategoryName, record.UnitsName).
+		// Where("stock_code = ? AND stock_Name = ? AND category_id = ? AND units_id = ?", record.Stock_Code, record.Stock_Name, record.CategoryID, record.UnitsID).
+
 		Where("stock_code = ? AND stock_Name = ? AND units_id = ?", record.Stock_Code, record.Stock_Name, record.UnitsID).
 		First(&stock).Error
 
@@ -91,7 +93,8 @@ func (pr *purchaseRepository) Create(ctx context.Context, purchaseDomain *purcha
 			CategoryID: record.CategoryID,
 			// CategoryName: record.CategoryName,
 
-			UnitsID: record.UnitsID,
+			UnitsID:     record.UnitsID,
+			Description: record.Description,
 			// UnitsName: record.UnitsName,
 
 			Stock_Total:   record.Quantity, // Jumlah yang dibeli ditambahkan ke stok total

@@ -33,6 +33,9 @@ import (
 	_unitsUseCase "backend-golang/businesses/units"
 	_unitsController "backend-golang/controllers/units"
 
+	_historyUseCase "backend-golang/businesses/history"
+	_historyController "backend-golang/controllers/history"
+
 	_dbDriver "backend-golang/drivers/mysql"
 
 	_middleware "backend-golang/app/middlewares"
@@ -105,6 +108,10 @@ func main() {
 	unitsUsecase := _unitsUseCase.NewUnitsUseCase(unitsRepo, &configJWT)
 	unitsCtrl := _unitsController.NewUnitsController(unitsUsecase)
 
+	historyRepo := _driverFactory.NewHistoryRepository(db)
+	historyUsecase := _historyUseCase.NewHistoryUseCase(historyRepo, &configJWT)
+	historyCtrl := _historyController.NewHistoryController(historyUsecase)
+
 	routesInit := _routes.ControllerList{
 		LoggerMiddleware: configLogger.Init(),
 		JWTMiddleware:    configJWT.Init(),
@@ -117,6 +124,8 @@ func main() {
 		VendorsController:  *vendorsCtrl,
 		CategoryController: *categoryCtrl,
 		UnitsController:    *unitsCtrl,
+
+		HistoryController: *historyCtrl,
 	}
 
 	routesInit.RegisterRoutes(e)
