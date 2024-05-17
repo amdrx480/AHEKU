@@ -64,14 +64,16 @@ func (pr *purchaseRepository) Create(ctx context.Context, purchaseDomain *purcha
 	// // Set UnitsID ke stockDomain berdasarkan Units yang ditemukan
 	// purchaseDomain.UnitsID = units.ID
 
-	record := FromDomain(purchaseDomain)
-	result := pr.conn.WithContext(ctx).Create(&record)
+	records := FromDomain(purchaseDomain)
+	// preload hasil response saat melakukan post pada purchase untuk isi field Units, Vendor, Category
+	result := pr.conn.WithContext(ctx).Preload("Units").Preload("Vendor").Preload("Category").Create(&records)
+	// result := pr.conn.WithContext(ctx).Create(&records)
 
 	if err := result.Error; err != nil {
 		return purchases.Domain{}, err
 	}
 
-	if err := result.Last(&record).Error; err != nil {
+	if err := result.Last(&records).Error; err != nil {
 		return purchases.Domain{}, err
 	}
 
@@ -79,38 +81,38 @@ func (pr *purchaseRepository) Create(ctx context.Context, purchaseDomain *purcha
 	var stock _dbStocks.Stock
 	// Cari stok berdasarkan kombinasi stock_code, category_namedan stock_unit
 	err := pr.conn.WithContext(ctx).
-		// Where("stock_code = ? AND category_name = ? AND units_name = ?", record.Stock_Code, record.CategoryName, record.UnitsName).
-		// Where("stock_code = ? AND stock_Name = ? AND category_id = ? AND units_id = ?", record.Stock_Code, record.Stock_Name, record.CategoryID, record.UnitsID).
+		// Where("stock_code = ? AND category_name = ? AND units_name = ?", records.Stock_Code, records.CategoryName, records.UnitsName).
+		// Where("stock_code = ? AND stock_Name = ? AND category_id = ? AND units_id = ?", records.Stock_Code, records.Stock_Name, records.CategoryID, records.UnitsID).
 
-		Where("stock_code = ? AND stock_Name = ? AND units_id = ?", record.Stock_Code, record.Stock_Name, record.UnitsID).
+		Where("stock_code = ? AND stock_Name = ? AND units_id = ?", records.Stock_Code, records.Stock_Name, records.UnitsID).
 		First(&stock).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// Jika stok belum ada, buat stok baru
 		newStock := _dbStocks.Stock{
-			Stock_Name: record.Stock_Name,
-			Stock_Code: record.Stock_Code,
-			CategoryID: record.CategoryID,
-			// CategoryName: record.CategoryName,
+			Stock_Name: records.Stock_Name,
+			Stock_Code: records.Stock_Code,
+			CategoryID: records.CategoryID,
+			// CategoryName: records.CategoryName,
 
-			UnitsID:     record.UnitsID,
-			Description: record.Description,
-			// UnitsName: record.UnitsName,
+			UnitsID:     records.UnitsID,
+			Description: records.Description,
+			// UnitsName: records.UnitsName,
 
-			Stock_Total:   record.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
-			Selling_Price: record.Selling_Price,
+			Stock_Total:   records.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
+			Selling_Price: records.Selling_Price,
 		}
 		pr.conn.WithContext(ctx).Create(&newStock)
 	} else if err == nil {
 		// Jika stok sudah ada, perbarui stok total
-		stock.Stock_Total += record.Quantity // Tambahkan jumlah yang dibeli ke stok total
+		stock.Stock_Total += records.Quantity // Tambahkan jumlah yang dibeli ke stok total
 		pr.conn.WithContext(ctx).Save(&stock)
 	} else {
 		// Jika ada kesalahan lain, kembalikan error
 		return purchases.Domain{}, err
 	}
 
-	return record.ToDomain(), nil
+	return records.ToDomain(), nil
 
 }
 

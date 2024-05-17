@@ -7,6 +7,7 @@ import (
 )
 
 type History struct {
+	CustomerID uint `json:"customer_id" `
 	StockID    uint `json:"stock_id" `
 	Quantity   int  `json:"quantity" `
 	TotalPrice int  `json:"total_price" `
@@ -14,6 +15,7 @@ type History struct {
 
 func (req *History) ToDomain() *history.Domain {
 	return &history.Domain{
+		CustomerID: req.CustomerID,
 		StockID:    req.StockID,
 		Quantity:   req.Quantity,
 		TotalPrice: req.TotalPrice,

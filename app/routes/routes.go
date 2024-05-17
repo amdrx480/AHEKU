@@ -3,8 +3,8 @@ package routes
 import (
 	// "backend-golang/app/middlewares"
 	// "backend-golang/businesses/purchases"
+	items "backend-golang/controllers/items"
 	purchases "backend-golang/controllers/purchases"
-	sales "backend-golang/controllers/sales"
 
 	category "backend-golang/controllers/category"
 	units "backend-golang/controllers/units"
@@ -12,6 +12,7 @@ import (
 	stocks "backend-golang/controllers/stocks"
 	vendors "backend-golang/controllers/vendors"
 
+	customers "backend-golang/controllers/customers"
 	history "backend-golang/controllers/history"
 
 	"backend-golang/controllers/users"
@@ -27,12 +28,14 @@ type ControllerList struct {
 
 	StocksController    stocks.StockController
 	PurchasesController purchases.PurchasesController
-	SalesController     sales.SalesController
+	ItemsController     items.ItemsController
 
 	VendorsController  vendors.VendorsController
 	CategoryController category.CategoryController
 	UnitsController    units.UnitsController
 	HistoryController  history.HistoryController
+
+	CustomersController customers.CustomersController
 }
 
 func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
@@ -58,12 +61,12 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	purchases.POST("", cl.PurchasesController.Create)
 	purchases.GET("", cl.PurchasesController.GetAll)
 
-	sales := e.Group("sales")
-	sales.GET("/:id", cl.SalesController.GetByID)
-	sales.POST("", cl.SalesController.Create)
-	sales.POST("/to_history", cl.SalesController.ToHistory)
-	sales.GET("", cl.SalesController.GetAll)
-	sales.DELETE("/:id", cl.SalesController.Delete)
+	items := e.Group("items")
+	items.GET("/:id", cl.ItemsController.GetByID)
+	items.POST("", cl.ItemsController.Create)
+	// items.POST("/to_history", cl.ItemsController.ToHistory)
+	items.GET("", cl.ItemsController.GetAll)
+	items.DELETE("/:id", cl.ItemsController.Delete)
 
 	// vendors := e.Group("vendors", echojwt.WithConfig(cl.JWTMiddleware))
 	vendors := e.Group("vendors")
@@ -83,5 +86,23 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	units.GET("/:id", cl.UnitsController.GetByID)
 	units.POST("", cl.UnitsController.Create)
 	units.GET("", cl.UnitsController.GetAll)
+
+	// carts := e.Group("carts", echojwt.WithConfig(cl.JWTMiddleware))
+	carts := e.Group("carts")
+	carts.GET("/:id", cl.ItemsController.GetByIDCart)
+	carts.POST("", cl.ItemsController.CreateCart)
+	carts.GET("", cl.ItemsController.GetAllCart)
+	carts.DELETE("/:id", cl.ItemsController.DeleteCart)
+
+	// units := e.Group("units", echojwt.WithConfig(cl.JWTMiddleware))
+	history := e.Group("history")
+	history.POST("", cl.HistoryController.Create)
+	history.GET("", cl.HistoryController.GetAll)
+
+	// vendors := e.Group("vendors", echojwt.WithConfig(cl.JWTMiddleware))
+	customers := e.Group("customers")
+	customers.GET("/:id", cl.CustomersController.GetByID)
+	customers.POST("", cl.CustomersController.Create)
+	customers.GET("", cl.CustomersController.GetAll)
 
 }

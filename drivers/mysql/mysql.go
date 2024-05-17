@@ -3,13 +3,15 @@ package mysql_driver
 import (
 	"backend-golang/drivers/mysql/category"
 	"backend-golang/drivers/mysql/history"
+	"backend-golang/drivers/mysql/items"
 	"backend-golang/drivers/mysql/purchases"
-	"backend-golang/drivers/mysql/sales"
 	"backend-golang/drivers/mysql/units"
 
+	"backend-golang/drivers/mysql/customers"
 	"backend-golang/drivers/mysql/stocks"
 	"backend-golang/drivers/mysql/users"
 	"backend-golang/drivers/mysql/vendors"
+
 	"fmt"
 	"log"
 
@@ -49,8 +51,9 @@ func (config *DBConfig) InitDB() *gorm.DB {
 }
 
 func MigrateDB(db *gorm.DB) {
-	err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &purchases.Purchase{}, &sales.Sales{}, &vendors.Vendors{}, &category.Category{}, &units.Units{}, &history.History{})
-	// err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &sales.Sales{}, &vendors.Vendors{}, &category.Category{}, &units.Units{})
+	err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &purchases.Purchase{}, &items.Items{}, &vendors.Vendors{}, &category.Category{}, &units.Units{}, &history.History{}, &customers.Customers{})
+	// err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &purchases.Purchase{}, &items.Items{}, &vendors.Vendors{}, &category.Category{}, &units.Units{}, &cart.Cart{}, &history.History{}, &customers.Customers{})
+	// err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &items.Items{}, &vendors.Vendors{}, &category.Category{}, &units.Units{})
 
 	if err != nil {
 		log.Fatalf("failed to perform database migration: %s\n", err)
@@ -192,8 +195,8 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "A001",
 			CategoryID: 1, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Kabel",
-			UnitsID:        1, // Pastikan unit ini ada di tabel units
-			UnitsName:      "Pcs",
+			UnitsID: 1, // Pastikan unit ini ada di tabel units
+			// UnitsName:      "Pcs",
 			Description:    "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
 			Quantity:       50,   // Jumlah yang dibeli
 			Purchase_Price: 500,  // Harga beli
@@ -205,8 +208,8 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "B001",
 			CategoryID: 2, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Lampu",
-			UnitsID:     2, // Pastikan unit ini ada di tabel units
-			UnitsName:   "Pack",
+			UnitsID: 2, // Pastikan unit ini ada di tabel units
+			// UnitsName:   "Pack",
 			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
 
 			Quantity:       75,   // Jumlah yang dibeli
@@ -219,8 +222,8 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "C001",
 			CategoryID: 3, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Contactor",
-			UnitsID:     3, // Pastikan unit ini ada di tabel units
-			UnitsName:   "Roll",
+			UnitsID: 3, // Pastikan unit ini ada di tabel units
+			// UnitsName:   "Roll",
 			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
 
 			Quantity:       60,   // Jumlah yang dibeli
@@ -233,8 +236,8 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "D001",
 			CategoryID: 4, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "MCB",
-			UnitsID:     4, // Pastikan unit ini ada di tabel units
-			UnitsName:   "Meter",
+			UnitsID: 4, // Pastikan unit ini ada di tabel units
+			// UnitsName:   "Meter",
 			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
 
 			Quantity:       80,   // Jumlah yang dibeli
@@ -247,8 +250,8 @@ func SeedPurchasesData(db *gorm.DB) error {
 			Stock_Code: "E001",
 			CategoryID: 5, // Pastikan kategori ini ada di tabel categories
 			// CategoryName: "Inverter",
-			UnitsID:     1, // Pastikan unit ini ada di tabel units
-			UnitsName:   "Pcs",
+			UnitsID: 1, // Pastikan unit ini ada di tabel units
+			// UnitsName:   "Pcs",
 			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
 
 			Quantity:       70,   // Jumlah yang dibeli
@@ -275,9 +278,9 @@ func SeedPurchasesData(db *gorm.DB) error {
 				Stock_Name: purchase.Stock_Name,
 				Stock_Code: purchase.Stock_Code,
 				// CategoryName:  purchase.CategoryName,
-				CategoryID:    purchase.CategoryID,
-				UnitsID:       purchase.UnitsID,
-				UnitsName:     purchase.UnitsName,
+				CategoryID: purchase.CategoryID,
+				UnitsID:    purchase.UnitsID,
+				// UnitsName:     purchase.UnitsName,
 				Description:   purchase.Description,
 				Stock_Total:   purchase.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
 				Selling_Price: purchase.Selling_Price,

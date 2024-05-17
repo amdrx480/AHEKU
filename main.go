@@ -21,8 +21,8 @@ import (
 	_purchasesUseCase "backend-golang/businesses/purchases"
 	_purchasesController "backend-golang/controllers/purchases"
 
-	_salesUseCase "backend-golang/businesses/sales"
-	_salesController "backend-golang/controllers/sales"
+	_itemsUseCase "backend-golang/businesses/items"
+	_itemsController "backend-golang/controllers/items"
 
 	_vendorsUseCase "backend-golang/businesses/vendors"
 	_vendorsController "backend-golang/controllers/vendors"
@@ -35,6 +35,9 @@ import (
 
 	_historyUseCase "backend-golang/businesses/history"
 	_historyController "backend-golang/controllers/history"
+
+	_customersUseCase "backend-golang/businesses/customers"
+	_customersController "backend-golang/controllers/customers"
 
 	_dbDriver "backend-golang/drivers/mysql"
 
@@ -63,7 +66,7 @@ func main() {
 	_dbDriver.SeedVendorsData(db)
 	_dbDriver.SeedCategoryData(db)
 	_dbDriver.SeedUnitsData(db)
-	_dbDriver.SeedPurchasesData(db)
+	// _dbDriver.SeedPurchasesData(db)
 
 	// _dbDriver.SeedStocksData(db)
 
@@ -92,9 +95,9 @@ func main() {
 	purchasesUsecase := _purchasesUseCase.NewPurchasesUseCase(purchasesRepo, &configJWT)
 	purchasesCtrl := _purchasesController.NewPurchasesController(purchasesUsecase)
 
-	salesRepo := _driverFactory.NewSalesRepository(db)
-	salesUsecase := _salesUseCase.NewSalesUseCase(salesRepo, &configJWT)
-	salesCtrl := _salesController.NewSalesController(salesUsecase)
+	itemsRepo := _driverFactory.NewItemsRepository(db)
+	itemsUsecase := _itemsUseCase.NewItemsUseCase(itemsRepo, &configJWT)
+	itemsCtrl := _itemsController.NewItemsController(itemsUsecase)
 
 	vendorsRepo := _driverFactory.NewVendorsRepository(db)
 	vendorsUsecase := _vendorsUseCase.NewVendorsUseCase(vendorsRepo, &configJWT)
@@ -112,6 +115,10 @@ func main() {
 	historyUsecase := _historyUseCase.NewHistoryUseCase(historyRepo, &configJWT)
 	historyCtrl := _historyController.NewHistoryController(historyUsecase)
 
+	customersRepo := _driverFactory.NewCustomersRepository(db)
+	customersUsecase := _customersUseCase.NewCustomersUseCase(customersRepo, &configJWT)
+	customersCtrl := _customersController.NewCustomersController(customersUsecase)
+
 	routesInit := _routes.ControllerList{
 		LoggerMiddleware: configLogger.Init(),
 		JWTMiddleware:    configJWT.Init(),
@@ -119,13 +126,14 @@ func main() {
 
 		StocksController:    *stockCtrl,
 		PurchasesController: *purchasesCtrl,
-		SalesController:     *salesCtrl,
+		ItemsController:     *itemsCtrl,
 
 		VendorsController:  *vendorsCtrl,
 		CategoryController: *categoryCtrl,
 		UnitsController:    *unitsCtrl,
 
-		HistoryController: *historyCtrl,
+		HistoryController:   *historyCtrl,
+		CustomersController: *customersCtrl,
 	}
 
 	routesInit.RegisterRoutes(e)

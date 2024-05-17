@@ -8,13 +8,16 @@ import (
 )
 
 type Domain struct {
-	ID         uint
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  gorm.DeletedAt
-	StockID    uint
-	Quantity   int
-	TotalPrice int
+	ID           uint
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt
+	CustomerID   uint
+	CustomerName string
+	StockID      uint
+	StockName    string
+	Quantity     int
+	TotalPrice   int
 }
 type Usecase interface {
 	Create(ctx context.Context, categoryDomain *Domain) (Domain, error)

@@ -12,16 +12,16 @@ type Domain struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      gorm.DeletedAt
-	VendorName     string
 	VendorID       uint
+	VendorName     string
 	Stock_Name     string
 	Stock_Code     string
-	CategoryName   string
 	CategoryID     uint
+	CategoryName   string
 	UnitsID        uint
 	UnitsName      string
-	Description    string
 	Quantity       int
+	Description    string
 	Purchase_Price int
 	Selling_Price  int
 }
