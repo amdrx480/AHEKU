@@ -12,32 +12,11 @@ import (
 	"syscall"
 	"time"
 
-	_userUseCase "backend-golang/businesses/users"
-	_userController "backend-golang/controllers/users"
-
-	_stockUseCase "backend-golang/businesses/stocks"
-	_stockController "backend-golang/controllers/stocks"
-
-	_purchasesUseCase "backend-golang/businesses/purchases"
-	_purchasesController "backend-golang/controllers/purchases"
-
-	_itemsUseCase "backend-golang/businesses/items"
-	_itemsController "backend-golang/controllers/items"
-
-	_vendorsUseCase "backend-golang/businesses/vendors"
-	_vendorsController "backend-golang/controllers/vendors"
-
-	_categoryUseCase "backend-golang/businesses/category"
-	_categoryController "backend-golang/controllers/category"
-
-	_unitsUseCase "backend-golang/businesses/units"
-	_unitsController "backend-golang/controllers/units"
+	_adminUseCase "backend-golang/businesses/admin"
+	_adminController "backend-golang/controllers/admin"
 
 	_historyUseCase "backend-golang/businesses/history"
 	_historyController "backend-golang/controllers/history"
-
-	_customersUseCase "backend-golang/businesses/customers"
-	_customersController "backend-golang/controllers/customers"
 
 	_dbDriver "backend-golang/drivers/mysql"
 
@@ -63,11 +42,13 @@ func main() {
 	// _dbDriver.ModifyTableCollation(db)
 
 	_dbDriver.SeedAdminData(db)
-	_dbDriver.SeedVendorsData(db)
-	_dbDriver.SeedCategoryData(db)
-	_dbDriver.SeedUnitsData(db)
-	// _dbDriver.SeedPurchasesData(db)
+	_dbDriver.SeedCustomersData(db)
 
+	_dbDriver.SeedCategoryData(db)
+	_dbDriver.SeedVendorsData(db)
+	_dbDriver.SeedUnitsData(db)
+
+	_dbDriver.SeedPurchasesData(db)
 	// _dbDriver.SeedStocksData(db)
 
 	_dbDriver.MigrateDB(db)
@@ -83,57 +64,20 @@ func main() {
 
 	e := echo.New()
 
-	userRepo := _driverFactory.NewUserRepository(db)
-	userUsecase := _userUseCase.NewUserUseCase(userRepo, &configJWT)
-	userCtrl := _userController.NewAuthController(userUsecase)
-
-	stockRepo := _driverFactory.NewStockRepository(db)
-	stockUsecase := _stockUseCase.NewStockUseCase(stockRepo, &configJWT)
-	stockCtrl := _stockController.NewStockController(stockUsecase)
-
-	purchasesRepo := _driverFactory.NewPurchasesRepository(db)
-	purchasesUsecase := _purchasesUseCase.NewPurchasesUseCase(purchasesRepo, &configJWT)
-	purchasesCtrl := _purchasesController.NewPurchasesController(purchasesUsecase)
-
-	itemsRepo := _driverFactory.NewItemsRepository(db)
-	itemsUsecase := _itemsUseCase.NewItemsUseCase(itemsRepo, &configJWT)
-	itemsCtrl := _itemsController.NewItemsController(itemsUsecase)
-
-	vendorsRepo := _driverFactory.NewVendorsRepository(db)
-	vendorsUsecase := _vendorsUseCase.NewVendorsUseCase(vendorsRepo, &configJWT)
-	vendorsCtrl := _vendorsController.NewVendorsController(vendorsUsecase)
-
-	categoryRepo := _driverFactory.NewCategoryRepository(db)
-	categoryUsecase := _categoryUseCase.NewCategoryUseCase(categoryRepo, &configJWT)
-	categoryCtrl := _categoryController.NewCategoryController(categoryUsecase)
-
-	unitsRepo := _driverFactory.NewUnitsRepository(db)
-	unitsUsecase := _unitsUseCase.NewUnitsUseCase(unitsRepo, &configJWT)
-	unitsCtrl := _unitsController.NewUnitsController(unitsUsecase)
+	adminRepo := _driverFactory.NewAdminRepository(db)
+	adminUsecase := _adminUseCase.NewAdminUseCase(adminRepo, &configJWT)
+	adminCtrl := _adminController.NewAdminController(adminUsecase)
 
 	historyRepo := _driverFactory.NewHistoryRepository(db)
 	historyUsecase := _historyUseCase.NewHistoryUseCase(historyRepo, &configJWT)
 	historyCtrl := _historyController.NewHistoryController(historyUsecase)
 
-	customersRepo := _driverFactory.NewCustomersRepository(db)
-	customersUsecase := _customersUseCase.NewCustomersUseCase(customersRepo, &configJWT)
-	customersCtrl := _customersController.NewCustomersController(customersUsecase)
-
 	routesInit := _routes.ControllerList{
 		LoggerMiddleware: configLogger.Init(),
 		JWTMiddleware:    configJWT.Init(),
-		AuthController:   *userCtrl,
 
-		StocksController:    *stockCtrl,
-		PurchasesController: *purchasesCtrl,
-		ItemsController:     *itemsCtrl,
-
-		VendorsController:  *vendorsCtrl,
-		CategoryController: *categoryCtrl,
-		UnitsController:    *unitsCtrl,
-
-		HistoryController:   *historyCtrl,
-		CustomersController: *customersCtrl,
+		AdminController:   *adminCtrl,
+		HistoryController: *historyCtrl,
 	}
 
 	routesInit.RegisterRoutes(e)

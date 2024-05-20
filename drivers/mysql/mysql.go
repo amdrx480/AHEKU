@@ -1,17 +1,7 @@
 package mysql_driver
 
 import (
-	"backend-golang/drivers/mysql/category"
-	"backend-golang/drivers/mysql/history"
-	"backend-golang/drivers/mysql/items"
-	"backend-golang/drivers/mysql/purchases"
-	"backend-golang/drivers/mysql/units"
-
-	"backend-golang/drivers/mysql/customers"
-	"backend-golang/drivers/mysql/stocks"
-	"backend-golang/drivers/mysql/users"
-	"backend-golang/drivers/mysql/vendors"
-
+	"backend-golang/drivers/mysql/admin"
 	"fmt"
 	"log"
 
@@ -51,9 +41,9 @@ func (config *DBConfig) InitDB() *gorm.DB {
 }
 
 func MigrateDB(db *gorm.DB) {
-	err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &purchases.Purchase{}, &items.Items{}, &vendors.Vendors{}, &category.Category{}, &units.Units{}, &history.History{}, &customers.Customers{})
-	// err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &purchases.Purchase{}, &items.Items{}, &vendors.Vendors{}, &category.Category{}, &units.Units{}, &cart.Cart{}, &history.History{}, &customers.Customers{})
-	// err := db.AutoMigrate(&users.User{}, &stocks.Stock{}, &items.Items{}, &vendors.Vendors{}, &category.Category{}, &units.Units{})
+	// err := db.AutoMigrate(&admin.Admins{})
+	err := db.AutoMigrate(&admin.Admins{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.Items{}, &admin.Carts{})
+	// err := db.AutoMigrate(&admin.Admins{}, &admin.Stocks{}, &items.Items{}, &vendors.Vendors{}, &category.Categories{}, &units.Units{})
 
 	if err != nil {
 		log.Fatalf("failed to perform database migration: %s\n", err)
@@ -73,9 +63,10 @@ func MigrateDB(db *gorm.DB) {
 
 func SeedAdminData(db *gorm.DB) error {
 	// Data admin yang ingin dibuat
-	adminData := users.User{
-		Name:     "irwan",
-		Password: "admin",
+	adminData := admin.Admins{
+		Name:     "admin",
+		Voucher:  "admin123",
+		Password: "admin12345",
 	}
 
 	// Menghasilkan hash password admin
@@ -88,7 +79,7 @@ func SeedAdminData(db *gorm.DB) error {
 	adminData.Password = string(password)
 
 	// Memeriksa apakah admin sudah ada berdasarkan email
-	var record users.User
+	var record admin.Admins
 	result := db.First(&record)
 
 	// Jika admin sudah ada, log pesan dan keluar
@@ -108,33 +99,32 @@ func SeedAdminData(db *gorm.DB) error {
 	return nil
 }
 
-func SeedVendorsData(db *gorm.DB) error {
-	vendorsData := []vendors.Vendors{
-		{Vendor_Name: "PT Skuy Makmur", Vendor_Address: "Tangerang, Jalan Makmur No 22", Vendor_Email: "SkuyMakmur@Gmail.com", Vendor_Phone: "081381814040"},
-		{Vendor_Name: "PT Guanzho", Vendor_Address: "Wuhan, Covid No 19", Vendor_Email: "Guanzho@Gmail.com", Vendor_Phone: "01230987896"},
-		{Vendor_Name: "PT Kuat Perkasa", Vendor_Address: "Konoha, JL Ninjaku No 90", Vendor_Email: "KuatPerkasa@Gmail.com", Vendor_Phone: "081567834908"},
+func SeedCustomersData(db *gorm.DB) error {
+	customersData := []admin.Customers{
+		{CustomerName: "Irwan", CustomerEmail: "Sejaterah@Gmail.com", CustomerAddress: "PT Sejaterah JL Neraka No 22", CustomerPhone: "081382815860"},
 	}
 
-	var record vendors.Vendors
+	var record admin.Customers
 	_ = db.First(&record)
 
 	if record.ID != 0 {
-		log.Printf("vendors detail already exists\n")
+		// if record.CategoryName != "" {
+		log.Printf("customers detail already exists\n")
 	} else {
-		for _, vendors := range vendorsData {
-			result := db.Create(&vendors)
+		for _, customers := range customersData {
+			result := db.Create(&customers)
 			if result.Error != nil {
 				return result.Error
 			}
 		}
-		log.Printf("%d vendors detail created\n", len(vendorsData))
+		log.Printf("%d customers detail created\n", len(customersData))
 	}
 
 	return nil
 }
 
 func SeedCategoryData(db *gorm.DB) error {
-	categoryData := []category.Category{
+	categoryData := []admin.Categories{
 		{CategoryName: "Kabel"},
 		{CategoryName: "Lampu"},
 		{CategoryName: "Contactor"},
@@ -142,7 +132,7 @@ func SeedCategoryData(db *gorm.DB) error {
 		{CategoryName: "Inverter"},
 	}
 
-	var record category.Category
+	var record admin.Categories
 	_ = db.First(&record)
 
 	if record.ID != 0 {
@@ -161,15 +151,40 @@ func SeedCategoryData(db *gorm.DB) error {
 	return nil
 }
 
-func SeedUnitsData(db *gorm.DB) error {
-	unitsData := []units.Units{
-		{UnitsName: "Pcs"},
-		{UnitsName: "Pack"},
-		{UnitsName: "Roll"},
-		{UnitsName: "Meter"},
+func SeedVendorsData(db *gorm.DB) error {
+	vendorsData := []admin.Vendors{
+		{VendorName: "PT Skuy Makmur", VendorAddress: "Tangerang, Jalan Makmur No 22", VendorEmail: "SkuyMakmur@Gmail.com", VendorPhone: "081381814040"},
+		{VendorName: "PT Guanzho", VendorAddress: "Wuhan, Covid No 19", VendorEmail: "Guanzho@Gmail.com", VendorPhone: "01230987896"},
+		{VendorName: "PT Kuat Perkasa", VendorAddress: "Konoha, JL Ninjaku No 90", VendorEmail: "KuatPerkasa@Gmail.com", VendorPhone: "081567834908"},
 	}
 
-	var record units.Units
+	var record admin.Vendors
+	_ = db.First(&record)
+
+	if record.ID != 0 {
+		log.Printf("vendors detail already exists\n")
+	} else {
+		for _, vendors := range vendorsData {
+			result := db.Create(&vendors)
+			if result.Error != nil {
+				return result.Error
+			}
+		}
+		log.Printf("%d vendors detail created\n", len(vendorsData))
+	}
+
+	return nil
+}
+
+func SeedUnitsData(db *gorm.DB) error {
+	unitsData := []admin.Units{
+		{UnitName: "Pcs"},
+		{UnitName: "Pack"},
+		{UnitName: "Roll"},
+		{UnitName: "Meter"},
+	}
+
+	var record admin.Units
 	_ = db.First(&record)
 
 	if record.ID != 0 {
@@ -188,75 +203,75 @@ func SeedUnitsData(db *gorm.DB) error {
 }
 
 func SeedPurchasesData(db *gorm.DB) error {
-	purchasesData := []purchases.Purchase{
+	purchasesData := []admin.Purchases{
 		{
 			VendorID:   1, // Pastikan vendor ini ada di tabel vendors
-			Stock_Name: "Produk A",
-			Stock_Code: "A001",
+			StockName:  "Produk A",
+			StockCode:  "A001",
 			CategoryID: 1, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Kabel",
-			UnitsID: 1, // Pastikan unit ini ada di tabel units
-			// UnitsName:      "Pcs",
-			Description:    "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+			UnitID: 1, // Pastikan unit ini ada di tabel units
+			// UnitName:      "Pcs",
+			Description:    "Lorem ipsum dolor sit amet.",
 			Quantity:       50,   // Jumlah yang dibeli
-			Purchase_Price: 500,  // Harga beli
-			Selling_Price:  1000, // Harga jual
+			PurchasesPrice: 500,  // Harga beli
+			SellingPrice:   1000, // Harga jual
 		},
 		{
 			VendorID:   2, // Pastikan vendor ini ada di tabel vendors
-			Stock_Name: "Produk B",
-			Stock_Code: "B001",
+			StockName:  "Produk B",
+			StockCode:  "B001",
 			CategoryID: 2, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Lampu",
-			UnitsID: 2, // Pastikan unit ini ada di tabel units
-			// UnitsName:   "Pack",
-			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+			UnitID: 2, // Pastikan unit ini ada di tabel units
+			// UnitName:   "Pack",
+			Description: "Lorem ipsum dolor sit amet.",
 
 			Quantity:       75,   // Jumlah yang dibeli
-			Purchase_Price: 750,  // Harga beli
-			Selling_Price:  2000, // Harga jual
+			PurchasesPrice: 750,  // Harga beli
+			SellingPrice:   2000, // Harga jual
 		},
 		{
 			VendorID:   3, // Pastikan vendor ini ada di tabel vendors
-			Stock_Name: "Produk C",
-			Stock_Code: "C001",
+			StockName:  "Produk C",
+			StockCode:  "C001",
 			CategoryID: 3, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "Contactor",
-			UnitsID: 3, // Pastikan unit ini ada di tabel units
-			// UnitsName:   "Roll",
-			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+			UnitID: 3, // Pastikan unit ini ada di tabel units
+			// UnitName:   "Roll",
+			Description: "Lorem ipsum dolor sit amet.",
 
 			Quantity:       60,   // Jumlah yang dibeli
-			Purchase_Price: 600,  // Harga beli
-			Selling_Price:  1500, // Harga jual
+			PurchasesPrice: 600,  // Harga beli
+			SellingPrice:   1500, // Harga jual
 		},
 		{
 			VendorID:   1, // Pastikan vendor ini ada di tabel vendors
-			Stock_Name: "Produk D",
-			Stock_Code: "D001",
+			StockName:  "Produk D",
+			StockCode:  "D001",
 			CategoryID: 4, // Pastikan kategori ini ada di tabel categories
 			// CategoryName:   "MCB",
-			UnitsID: 4, // Pastikan unit ini ada di tabel units
-			// UnitsName:   "Meter",
-			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+			UnitID: 4, // Pastikan unit ini ada di tabel units
+			// UnitName:   "Meter",
+			Description: "Lorem ipsum dolor sit amet.",
 
 			Quantity:       80,   // Jumlah yang dibeli
-			Purchase_Price: 800,  // Harga beli
-			Selling_Price:  3000, // Harga jual
+			PurchasesPrice: 800,  // Harga beli
+			SellingPrice:   3000, // Harga jual
 		},
 		{
 			VendorID:   2, // Pastikan vendor ini ada di tabel vendors
-			Stock_Name: "Produk E",
-			Stock_Code: "E001",
+			StockName:  "Produk E",
+			StockCode:  "E001",
 			CategoryID: 5, // Pastikan kategori ini ada di tabel categories
 			// CategoryName: "Inverter",
-			UnitsID: 1, // Pastikan unit ini ada di tabel units
-			// UnitsName:   "Pcs",
-			Description: "Lorem ipsum dolor sit amet, consectetur adipiscing eli.",
+			UnitID: 1, // Pastikan unit ini ada di tabel units
+			// UnitName:   "Pcs",
+			Description: "Lorem ipsum dolor sit amet.",
 
 			Quantity:       70,   // Jumlah yang dibeli
-			Purchase_Price: 700,  // Harga beli
-			Selling_Price:  2500, // Harga jual
+			PurchasesPrice: 700,  // Harga beli
+			SellingPrice:   2500, // Harga jual
 		},
 	}
 
@@ -268,22 +283,22 @@ func SeedPurchasesData(db *gorm.DB) error {
 		}
 
 		// Setelah berhasil membuat pembelian, perbarui atau tambahkan stok
-		var stock stocks.Stock
-		// err := db.Where("stock_code = ? AND units_name = ?", purchase.Stock_Code, purchase.UnitsName).
-		err := db.Where("stock_code = ?", purchase.Stock_Code).
+		var stock admin.Stocks
+		// err := db.Where("stock_code = ? AND units_name = ?", purchase.StockCode, purchase.UnitName).
+		err := db.Where("stock_code = ?", purchase.StockCode).
 			First(&stock).Error
 		if err == gorm.ErrRecordNotFound {
 			// Jika stok belum ada, buat stok baru
-			newStock := stocks.Stock{
-				Stock_Name: purchase.Stock_Name,
-				Stock_Code: purchase.Stock_Code,
-				// CategoryName:  purchase.CategoryName,
+			newStock := admin.Stocks{
+				StockName:  purchase.StockName,
+				StockCode:  purchase.StockCode,
 				CategoryID: purchase.CategoryID,
-				UnitsID:    purchase.UnitsID,
-				// UnitsName:     purchase.UnitsName,
-				Description:   purchase.Description,
-				Stock_Total:   purchase.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
-				Selling_Price: purchase.Selling_Price,
+				// CategoryName: purchase.Categories.CategoryName,
+				UnitID: purchase.UnitID,
+				// UnitName:     purchase.UnitName,
+				Description:  purchase.Description,
+				StockTotal:   purchase.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
+				SellingPrice: purchase.SellingPrice,
 			}
 			db.Create(&newStock)
 		} else {
@@ -293,7 +308,7 @@ func SeedPurchasesData(db *gorm.DB) error {
 	}
 	// else if err == nil {
 	// 	// Jika stok sudah ada, perbarui stok total
-	// 	stock.Stock_Total += purchase.Quantity // Tambahkan jumlah yang dibeli ke stok total
+	// 	stock.StockTotal += purchase.Quantity // Tambahkan jumlah yang dibeli ke stok total
 	// 	db.Save(&stock)
 	// }
 
@@ -308,55 +323,55 @@ func SeedStocksData(db *gorm.DB) error {
 	// {CategoryName: "Contactor"},
 	// {CategoryName: "MCB"},
 	// {CategoryName: "Inverter"},
-	stocksData := []stocks.Stock{
+	stocksData := []admin.Stocks{
 		{
-			Stock_Name: "Produk A",
-			Stock_Code: "A001",
+			StockName: "Produk A",
+			StockCode: "A001",
 			// CategoryID:    1,    // Pastikan kategori ini ada di tabel categories
 			// CategoryName:  "Kabel",
-			UnitsID:       1,    // Pastikan unit ini ada di tabel units
-			Stock_Total:   100,  // Jumlah stok total
-			Selling_Price: 1000, // Harga jual
+			UnitID:       1,    // Pastikan unit ini ada di tabel units
+			StockTotal:   100,  // Jumlah stok total
+			SellingPrice: 1000, // Harga jual
 		},
 		{
-			Stock_Name: "Produk B",
-			Stock_Code: "B001",
+			StockName: "Produk B",
+			StockCode: "B001",
 			// CategoryID:    2,    // Pastikan kategori ini ada di tabel categories
 			// CategoryName:  "Lampu",
-			UnitsID:       2,    // Pastikan unit ini ada di tabel units
-			Stock_Total:   200,  // Jumlah stok total
-			Selling_Price: 2000, // Harga jual
+			UnitID:       2,    // Pastikan unit ini ada di tabel units
+			StockTotal:   200,  // Jumlah stok total
+			SellingPrice: 2000, // Harga jual
 		},
 		{
-			Stock_Name: "Produk C",
-			Stock_Code: "C001",
+			StockName: "Produk C",
+			StockCode: "C001",
 			// CategoryID:    3,    // Pastikan kategori ini ada di tabel categories
 			// CategoryName:  "Contactor",
-			UnitsID:       3,    // Pastikan unit ini ada di tabel units
-			Stock_Total:   150,  // Jumlah stok total
-			Selling_Price: 1500, // Harga jual
+			UnitID:       3,    // Pastikan unit ini ada di tabel units
+			StockTotal:   150,  // Jumlah stok total
+			SellingPrice: 1500, // Harga jual
 		},
 		{
-			Stock_Name: "Produk D",
-			Stock_Code: "D001",
+			StockName: "Produk D",
+			StockCode: "D001",
 			// CategoryID:    4,    // Pastikan kategori ini ada di tabel categories
 			// CategoryName:  "MCB",
-			UnitsID:       4,    // Pastikan unit ini ada di tabel units
-			Stock_Total:   300,  // Jumlah stok total
-			Selling_Price: 3000, // Harga jual
+			UnitID:       4,    // Pastikan unit ini ada di tabel units
+			StockTotal:   300,  // Jumlah stok total
+			SellingPrice: 3000, // Harga jual
 		},
 		{
-			Stock_Name: "Produk E",
-			Stock_Code: "E001",
+			StockName: "Produk E",
+			StockCode: "E001",
 			// CategoryID:    5,    // Pastikan kategori ini ada di tabel categories
 			// CategoryName:  "Inverter",
-			UnitsID:       4,    // Pastikan unit ini ada di tabel units
-			Stock_Total:   250,  // Jumlah stok total
-			Selling_Price: 2500, // Harga jual
+			UnitID:       4,    // Pastikan unit ini ada di tabel units
+			StockTotal:   250,  // Jumlah stok total
+			SellingPrice: 2500, // Harga jual
 		},
 	}
 
-	var record stocks.Stock
+	var record admin.Stocks
 	_ = db.First(&record)
 
 	if record.ID != 0 {
