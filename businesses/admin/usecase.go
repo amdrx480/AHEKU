@@ -124,34 +124,38 @@ func (usecase *adminUsecase) PurchasesGetAll(ctx context.Context) ([]PurchasesDo
 	return usecase.adminRepository.PurchasesGetAll(ctx)
 }
 
-func (usecase *adminUsecase) ItemsGetByID(ctx context.Context, id string) (ItemsDomain, error) {
-	return usecase.adminRepository.ItemsGetByID(ctx, id)
+func (usecase *adminUsecase) CartItemsGetByID(ctx context.Context, id string) (CartItemsDomain, error) {
+	return usecase.adminRepository.CartItemsGetByID(ctx, id)
 }
 
-func (usecase *adminUsecase) ItemsCreate(ctx context.Context, itemsDomain *ItemsDomain) (ItemsDomain, error) {
-	return usecase.adminRepository.ItemsCreate(ctx, itemsDomain)
+func (usecase *adminUsecase) CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error) {
+	return usecase.adminRepository.CartItemsGetByCustomerID(ctx, customerId)
 }
 
-func (usecase *adminUsecase) ItemsGetAll(ctx context.Context) ([]ItemsDomain, error) {
-	return usecase.adminRepository.ItemsGetAll(ctx)
+func (usecase *adminUsecase) CartItemsCreate(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error) {
+	return usecase.adminRepository.CartItemsCreate(ctx, cartItemsDomain)
 }
 
-func (usecase *adminUsecase) ItemsDelete(ctx context.Context, id string) error {
-	return usecase.adminRepository.ItemsDelete(ctx, id)
+func (usecase *adminUsecase) CartItemsGetAll(ctx context.Context) ([]CartItemsDomain, error) {
+	return usecase.adminRepository.CartItemsGetAll(ctx)
 }
 
-func (usecase *adminUsecase) CartsGetByID(ctx context.Context, id string) (CartsDomain, error) {
-	return usecase.adminRepository.CartsGetByID(ctx, id)
+func (usecase *adminUsecase) CartItemsDelete(ctx context.Context, id string) error {
+	return usecase.adminRepository.CartItemsDelete(ctx, id)
 }
 
-func (usecase *adminUsecase) CartsCreate(ctx context.Context, itemsDomain *CartsDomain) (CartsDomain, error) {
-	return usecase.adminRepository.CartsCreate(ctx, itemsDomain)
-}
+// func (usecase *adminUsecase) CartsCreate(ctx context.Context, cartItemsDomain *CartsDomain) (CartsDomain, error) {
+// 	return usecase.adminRepository.CartsCreate(ctx, cartItemsDomain)
+// }
 
-func (usecase *adminUsecase) CartsGetAll(ctx context.Context) ([]CartsDomain, error) {
-	return usecase.adminRepository.CartsGetAll(ctx)
-}
+// func (usecase *adminUsecase) CartsGetByID(ctx context.Context, id string) (CartsDomain, error) {
+// 	return usecase.adminRepository.CartsGetByID(ctx, id)
+// }
 
-func (usecase *adminUsecase) CartsDelete(ctx context.Context, id string) error {
-	return usecase.adminRepository.CartsDelete(ctx, id)
-}
+// func (usecase *adminUsecase) CartsGetAll(ctx context.Context) ([]CartsDomain, error) {
+// 	return usecase.adminRepository.CartsGetAll(ctx)
+// }
+
+// func (usecase *adminUsecase) CartsDelete(ctx context.Context, id string) error {
+// 	return usecase.adminRepository.CartsDelete(ctx, id)
+// }

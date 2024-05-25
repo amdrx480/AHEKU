@@ -26,6 +26,7 @@ type Customers struct {
 	CustomerAddress string         `json:"customer_address"`
 	CustomerEmail   string         `json:"customer_email"`
 	CustomerPhone   string         `json:"customer_phone"`
+	CartItems       []CartItems    `json:"cart_items"`
 }
 
 type Category struct {
@@ -77,41 +78,32 @@ type Purchases struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `json:"deleted_at"`
 	VendorID       uint           `json:"vendor_id"`
-	VendorName     string         `json:"vendor_name"`
 	StockName      string         `json:"stock_name"`
 	StockCode      string         `json:"stock_code"`
 	CategoryID     uint           `json:"category_id"`
-	CategoryName   string         `json:"category_name"`
 	UnitID         uint           `json:"units_id"`
-	UnitName       string         `json:"units_name"`
 	Quantity       int            `json:"quantity"`
 	Description    string         `json:"description"`
 	Purchase_Price int            `json:"purchase_price"`
 	SellingPrice   int            `json:"selling_price"`
 }
 
-type Items struct {
-	ID            uint           `json:"id" gorm:"primaryKey"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	DeletedAt     gorm.DeletedAt `json:"deleted_at"`
-	CartID        uint           `json:"cart_id"`
-	StockID       uint           `json:"stock_id"`
-	StockName     string         `json:"stock_name"`
-	Quantity      int            `json:"quantity"`
-	Selling_Price int            `json:"selling_price"`
-	Price         int            `json:"price"`
-}
-
-type Carts struct {
-	ID         uint           `json:"id" gorm:"primaryKey"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `json:"deleted_at"`
-	CustomerID uint           `json:"customer_id"`
-	Items      []Items        `json:"items"`
-	Total      int            `json:"total"`
-	Status     string         `json:"status"`
+type CartItems struct {
+	ID        uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at"`
+	// CartID        uint           `json:"cart_id"`
+	CustomerID   uint   `json:"customer_id"`
+	CustomerName string `json:"customer_name"`
+	StockID      uint   `json:"stock_id"`
+	StockName    string `json:"stock_name"`
+	// CategoryID    uint   `json:"category_id"`
+	// CategoryName  string `json:"category_name"`
+	Quantity      int `json:"quantity"`
+	Selling_Price int `json:"selling_price"`
+	Price         int `json:"price"`
+	SubTotal      int `json:"sub_total"`
 }
 
 func FromAdminsDomain(domain admin.AdminsDomain) Admin {
@@ -127,6 +119,10 @@ func FromAdminsDomain(domain admin.AdminsDomain) Admin {
 }
 
 func FromCustomersDomain(domain admin.CustomersDomain) Customers {
+	cartItems := []CartItems{}
+	for _, item := range domain.CartItems {
+		cartItems = append(cartItems, FromCartItemsDomain(item))
+	}
 	return Customers{
 		ID:              domain.ID,
 		CreatedAt:       domain.CreatedAt,
@@ -136,6 +132,7 @@ func FromCustomersDomain(domain admin.CustomersDomain) Customers {
 		CustomerAddress: domain.CustomerAddress,
 		CustomerEmail:   domain.CustomerEmail,
 		CustomerPhone:   domain.CustomerPhone,
+		CartItems:       cartItems,
 	}
 }
 
@@ -192,18 +189,18 @@ func FromStocksDomain(domain admin.StocksDomain) Stocks {
 
 func FromPurchasesDomain(domain admin.PurchasesDomain) Purchases {
 	return Purchases{
-		ID:             domain.ID,
-		CreatedAt:      domain.CreatedAt,
-		UpdatedAt:      domain.UpdatedAt,
-		DeletedAt:      domain.DeletedAt,
-		VendorID:       domain.VendorID,
-		VendorName:     domain.VendorName,
-		StockName:      domain.StockName,
-		StockCode:      domain.StockCode,
-		CategoryID:     domain.CategoryID,
-		CategoryName:   domain.CategoryName,
-		UnitID:         domain.UnitID,
-		UnitName:       domain.UnitName,
+		ID:        domain.ID,
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		VendorID:  domain.VendorID,
+		// VendorName:     domain.VendorName,
+		StockName:  domain.StockName,
+		StockCode:  domain.StockCode,
+		CategoryID: domain.CategoryID,
+		// CategoryName:   domain.CategoryName,
+		UnitID: domain.UnitID,
+		// UnitName:       domain.UnitName,
 		Quantity:       domain.Quantity,
 		Description:    domain.Description,
 		Purchase_Price: domain.PurchasesPrice,
@@ -211,34 +208,20 @@ func FromPurchasesDomain(domain admin.PurchasesDomain) Purchases {
 	}
 }
 
-func FromItemsDomain(domain admin.ItemsDomain) Items {
-	return Items{
-		ID:        domain.ID,
-		CreatedAt: domain.CreatedAt,
-		UpdatedAt: domain.UpdatedAt,
-		DeletedAt: domain.DeletedAt,
-		CartID:    domain.CartID,
-		StockID:   domain.StockID,
-		StockName: domain.StockName,
-		Quantity:  domain.Quantity,
-		Price:     domain.Price,
-	}
-}
-
-// Fungsi untuk mengubah dari domain ke response struct Carts
-func FromCartsDomain(domain admin.CartsDomain) Carts {
-	items := []Items{}
-	for _, item := range domain.Items {
-		items = append(items, FromItemsDomain(item))
-	}
-	return Carts{
-		ID:         domain.ID,
-		CreatedAt:  domain.CreatedAt,
-		UpdatedAt:  domain.UpdatedAt,
-		DeletedAt:  domain.DeletedAt,
-		CustomerID: domain.CustomerID,
-		Items:      items,
-		Total:      domain.Total,
-		Status:     domain.Status,
+func FromCartItemsDomain(domain admin.CartItemsDomain) CartItems {
+	return CartItems{
+		ID:           domain.ID,
+		CreatedAt:    domain.CreatedAt,
+		UpdatedAt:    domain.UpdatedAt,
+		DeletedAt:    domain.DeletedAt,
+		CustomerID:   domain.CustomerID,
+		CustomerName: domain.CustomerName,
+		StockID:      domain.StockID,
+		StockName:    domain.StockName,
+		// CategoryID:   domain.CategoryID,
+		// CategoryName: domain.CategoryName,
+		Quantity: domain.Quantity,
+		Price:    domain.Price,
+		SubTotal: domain.SubTotal,
 	}
 }

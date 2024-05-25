@@ -41,9 +41,8 @@ func (config *DBConfig) InitDB() *gorm.DB {
 }
 
 func MigrateDB(db *gorm.DB) {
-	// err := db.AutoMigrate(&admin.Admins{})
-	err := db.AutoMigrate(&admin.Admins{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.Items{}, &admin.Carts{})
-	// err := db.AutoMigrate(&admin.Admins{}, &admin.Stocks{}, &items.Items{}, &vendors.Vendors{}, &category.Categories{}, &units.Units{})
+	// err := db.AutoMigrate(&admin.Admins{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{}, &admin.Carts{})
+	err := db.AutoMigrate(&admin.Admins{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{})
 
 	if err != nil {
 		log.Fatalf("failed to perform database migration: %s\n", err)
@@ -101,7 +100,10 @@ func SeedAdminData(db *gorm.DB) error {
 
 func SeedCustomersData(db *gorm.DB) error {
 	customersData := []admin.Customers{
-		{CustomerName: "Irwan", CustomerEmail: "Sejaterah@Gmail.com", CustomerAddress: "PT Sejaterah JL Neraka No 22", CustomerPhone: "081382815860"},
+		{CustomerName: "Ajax", CustomerEmail: "Ajax@Gmail.com", CustomerAddress: "PT Farm Land", CustomerPhone: "+5412345678901"},
+		{CustomerName: "Doss", CustomerEmail: "Doss@Gmail.com", CustomerAddress: "PT Valley", CustomerPhone: "+5212345678901"},
+		{CustomerName: "Fred", CustomerEmail: "Fred@Gmail.com", CustomerAddress: "PT Northbridge", CustomerPhone: "+5512345678901"},
+		{CustomerName: "Renoir", CustomerEmail: "Renoir@Gmail.com", CustomerAddress: "PT Armory", CustomerPhone: "+5712345678901"},
 	}
 
 	var record admin.Customers

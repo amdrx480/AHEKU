@@ -22,10 +22,11 @@ type Customers struct {
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	CustomerName    string         `json:"customer_name"`
+	CustomerName    string         `json:"customer_name" gorm:"unique;not null"`
 	CustomerEmail   string         `json:"customer_email"`
 	CustomerAddress string         `json:"customer_address"`
 	CustomerPhone   string         `json:"customer_phone"`
+	CartItems       []CartItems    `gorm:"foreignKey:customer_id"` // Menentukan foreign key
 }
 
 type Categories struct {
@@ -63,11 +64,9 @@ type Stocks struct {
 	StockName    string         `json:"stock_name"`
 	StockCode    string         `json:"stock_code"`
 	Categories   Categories     `json:"-" gorm:"foreignKey:CategoryID"`
-	CategoryName string         `json:"category_name"`
 	CategoryID   uint           `json:"category_id"`
 	Units        Units          `json:"-" gorm:"foreignKey:UnitID"`
 	UnitID       uint           `json:"unit_id"`
-	UnitName     string         `json:"unit_name"`
 	Description  string         `json:"description"`
 	Image_Path   string         `json:"image_path"`
 	StockTotal   int            `json:"stock_total"`
@@ -80,47 +79,37 @@ type Purchases struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 	//Preload Memuat data Dari isi Nama Tabel Struck
-	Vendors        Vendors    `json:"-" gorm:"foreignKey:VendorID"`
-	VendorID       uint       `json:"vendor_id"`
-	VendorName     string     `json:"Vendor_name"`
-	StockName      string     `json:"stock_name"`
-	StockCode      string     `json:"stock_code"`
-	Categories     Categories `json:"-" gorm:"foreignKey:CategoryID"`
-	CategoryID     uint       `json:"category_id"`
-	CategoryName   string     `json:"category_name"`
-	Units          Units      `gorm:"foreignKey:UnitID"`
-	UnitID         uint       `json:"unit_id"`
-	UnitName       string     `json:"unit_name"`
-	Description    string     `json:"description"`
-	Quantity       int        `json:"quantity"`
-	PurchasesPrice int        `json:"purchases_price"`
-	SellingPrice   int        `json:"selling_price"`
+	Vendors  Vendors `json:"-" gorm:"foreignKey:VendorID"`
+	VendorID uint    `json:"vendor_id"`
+	// VendorName string     `json:"Vendor_name"`
+	StockName  string     `json:"stock_name"`
+	StockCode  string     `json:"stock_code"`
+	Categories Categories `json:"-" gorm:"foreignKey:CategoryID"`
+	CategoryID uint       `json:"category_id"`
+	// CategoryName   string     `json:"category_name"`
+	Units  Units `gorm:"foreignKey:UnitID"`
+	UnitID uint  `json:"unit_id"`
+	// UnitName       string `json:"unit_name"`
+	Description    string `json:"description"`
+	Quantity       int    `json:"quantity"`
+	PurchasesPrice int    `json:"purchases_price"`
+	SellingPrice   int    `json:"selling_price"`
 }
 
-type Items struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	Carts     Carts          `gorm:"foreignKey:cart_id"` // Menentukan foreign key
-	CartID    uint           `json:"cart_id"`
-	Stocks    Stocks         `json:"-" gorm:"foreignKey:stock_id"`
-	StockID   uint           `json:"stock_id"`
-	StockName string         `json:"stock_name"`
-	Quantity  int            `json:"quantity"`
-	Price     int            `json:"price"`
-}
-
-type Carts struct {
+type CartItems struct {
 	ID         uint           `json:"id" gorm:"primaryKey"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	Customer   Customers      `gorm:"foreignKey:customer_id"`
+	Customers  Customers      `gorm:"foreignKey:customer_id"` // Menentukan foreign key
 	CustomerID uint           `json:"customer_id"`
-	Items      []Items        `gorm:"foreignKey:cart_id"` // Menentukan foreign key
-	Total      int            `json:"total"`
-	Status     string         `json:"status"`
+	Stocks     Stocks         `json:"-" gorm:"foreignKey:stock_id"`
+	StockID    uint           `json:"stock_id"`
+	// Categories Categories     `json:"-" gorm:"foreignKey:category_id"`
+	// CategoryID uint           `json:"category_id"`
+	Quantity int `json:"quantity"`
+	Price    int `json:"price"`
+	SubTotal int `json:"sub_total"`
 }
 
 func (record *Admins) ToAdminsDomain() admin.AdminsDomain {
@@ -148,6 +137,10 @@ func FromAdminsDomain(domain *admin.AdminsDomain) *Admins {
 }
 
 func (record *Customers) ToCustomersDomain() admin.CustomersDomain {
+	cartItemsDomain := []admin.CartItemsDomain{}
+	for _, item := range record.CartItems {
+		cartItemsDomain = append(cartItemsDomain, item.ToCartItemsDomain())
+	}
 	return admin.CustomersDomain{
 		ID:              record.ID,
 		CreatedAt:       record.CreatedAt,
@@ -157,10 +150,16 @@ func (record *Customers) ToCustomersDomain() admin.CustomersDomain {
 		CustomerAddress: record.CustomerAddress,
 		CustomerEmail:   record.CustomerEmail,
 		CustomerPhone:   record.CustomerPhone,
+		CartItems:       cartItemsDomain,
 	}
 }
 
 func FromCustomersDomain(domain *admin.CustomersDomain) *Customers {
+	cartItems := []CartItems{}
+	for _, item := range domain.CartItems {
+		cartItems = append(cartItems, *FromCartItemsDomain(&item))
+	}
+
 	return &Customers{
 		ID:              domain.ID,
 		CreatedAt:       domain.CreatedAt,
@@ -170,6 +169,7 @@ func FromCustomersDomain(domain *admin.CustomersDomain) *Customers {
 		CustomerAddress: domain.CustomerAddress,
 		CustomerEmail:   domain.CustomerEmail,
 		CustomerPhone:   domain.CustomerPhone,
+		CartItems:       cartItems,
 	}
 }
 
@@ -262,9 +262,7 @@ func FromStocksDomain(domain *admin.StocksDomain) *Stocks {
 		StockName:    domain.StockName,
 		StockCode:    domain.StockCode,
 		CategoryID:   domain.CategoryID,
-		CategoryName: domain.CategoryName,
 		UnitID:       domain.UnitID,
-		UnitName:     domain.UnitName,
 		Description:  domain.Description,
 		StockTotal:   domain.StockTotal,
 		SellingPrice: domain.SellingPrice,
@@ -273,18 +271,18 @@ func FromStocksDomain(domain *admin.StocksDomain) *Stocks {
 
 func (record *Purchases) ToPurchasesDomain() admin.PurchasesDomain {
 	return admin.PurchasesDomain{
-		ID:             record.ID,
-		CreatedAt:      record.CreatedAt,
-		UpdatedAt:      record.UpdatedAt,
-		DeletedAt:      record.DeletedAt,
-		VendorID:       record.VendorID,
-		VendorName:     record.Vendors.VendorName,
-		StockName:      record.StockName,
-		StockCode:      record.StockCode,
-		CategoryID:     record.CategoryID,
-		CategoryName:   record.Categories.CategoryName,
-		UnitID:         record.UnitID,
-		UnitName:       record.Units.UnitName,
+		ID:        record.ID,
+		CreatedAt: record.CreatedAt,
+		UpdatedAt: record.UpdatedAt,
+		DeletedAt: record.DeletedAt,
+		VendorID:  record.VendorID,
+		// VendorName:     record.Vendors.VendorName,
+		StockName:  record.StockName,
+		StockCode:  record.StockCode,
+		CategoryID: record.CategoryID,
+		// CategoryName:   record.Categories.CategoryName,
+		UnitID: record.UnitID,
+		// UnitName:       record.Units.UnitName,
 		Description:    record.Description,
 		Quantity:       record.Quantity,
 		PurchasesPrice: record.PurchasesPrice,
@@ -293,18 +291,18 @@ func (record *Purchases) ToPurchasesDomain() admin.PurchasesDomain {
 }
 func FromPurchasesDomain(domain *admin.PurchasesDomain) *Purchases {
 	return &Purchases{
-		ID:             domain.ID,
-		CreatedAt:      domain.CreatedAt,
-		UpdatedAt:      domain.UpdatedAt,
-		DeletedAt:      domain.DeletedAt,
-		VendorID:       domain.VendorID,
-		VendorName:     domain.VendorName,
-		StockName:      domain.StockName,
-		StockCode:      domain.StockCode,
-		CategoryID:     domain.CategoryID,
-		CategoryName:   domain.CategoryName,
-		UnitID:         domain.UnitID,
-		UnitName:       domain.UnitName,
+		ID:        domain.ID,
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		VendorID:  domain.VendorID,
+		// VendorName: domain.VendorName,
+		StockName:  domain.StockName,
+		StockCode:  domain.StockCode,
+		CategoryID: domain.CategoryID,
+		// CategoryName:   domain.CategoryName,
+		UnitID: domain.UnitID,
+		// UnitName:       domain.UnitName,
 		Description:    domain.Description,
 		Quantity:       domain.Quantity,
 		PurchasesPrice: domain.PurchasesPrice,
@@ -312,62 +310,69 @@ func FromPurchasesDomain(domain *admin.PurchasesDomain) *Purchases {
 	}
 }
 
-func (record *Items) ToItemsDomain() admin.ItemsDomain {
-	return admin.ItemsDomain{
-		ID:        record.ID,
-		CreatedAt: record.CreatedAt,
-		UpdatedAt: record.UpdatedAt,
-		DeletedAt: record.DeletedAt,
-		CartID:    record.CartID,
-		StockID:   record.StockID,
-		StockName: record.Stocks.StockName,
-		Quantity:  record.Quantity,
-		Price:     record.Price,
+func (record *CartItems) ToCartItemsDomain() admin.CartItemsDomain {
+	return admin.CartItemsDomain{
+		ID:           record.ID,
+		CreatedAt:    record.CreatedAt,
+		UpdatedAt:    record.UpdatedAt,
+		DeletedAt:    record.DeletedAt,
+		CustomerID:   record.CustomerID,
+		CustomerName: record.Customers.CustomerName,
+		StockID:      record.StockID,
+		StockName:    record.Stocks.StockName,
+		// CategoryName: record.Categories.CategoryName,
+		Quantity: record.Quantity,
+		Price:    record.Price,
+		SubTotal: record.SubTotal,
+		// CartID:    record.CartID,
 	}
 }
-func FromItemsDomain(domain *admin.ItemsDomain) *Items {
-	return &Items{
-		ID:        domain.ID,
-		CreatedAt: domain.CreatedAt,
-		UpdatedAt: domain.UpdatedAt,
-		DeletedAt: domain.DeletedAt,
-		CartID:    domain.CartID,
-		StockID:   domain.StockID,
-		StockName: domain.StockName,
-		Quantity:  domain.Quantity,
-		Price:     domain.Price,
-	}
-}
-
-func (record *Carts) ToCartsDomain() admin.CartsDomain {
-	itemsDomain := []admin.ItemsDomain{}
-	for _, item := range record.Items {
-		itemsDomain = append(itemsDomain, item.ToItemsDomain())
-	}
-	return admin.CartsDomain{
-		ID:         record.ID,
-		CreatedAt:  record.CreatedAt,
-		UpdatedAt:  record.UpdatedAt,
-		DeletedAt:  record.DeletedAt,
-		CustomerID: record.CustomerID,
-		Items:      itemsDomain,
-		Total:      record.Total,
-	}
-}
-
-func FromCartsDomain(domain *admin.CartsDomain) *Carts {
-	itemsModel := []Items{}
-	for _, item := range domain.Items {
-		itemsModel = append(itemsModel, *FromItemsDomain(&item))
-	}
-
-	return &Carts{
+func FromCartItemsDomain(domain *admin.CartItemsDomain) *CartItems {
+	return &CartItems{
 		ID:         domain.ID,
 		CreatedAt:  domain.CreatedAt,
 		UpdatedAt:  domain.UpdatedAt,
 		DeletedAt:  domain.DeletedAt,
 		CustomerID: domain.CustomerID,
-		Items:      itemsModel,
-		Total:      domain.Total,
+		// CustomerName: domain.CustomerName,
+		// CartID:    domain.CartID,
+		StockID: domain.StockID,
+		// StockName: domain.StockName,
+		Quantity: domain.Quantity,
+		Price:    domain.Price,
+		SubTotal: domain.SubTotal,
 	}
 }
+
+// func (record *Carts) ToCartsDomain() admin.CartsDomain {
+// 	cartItemsDomain := []admin.CartItemsDomain{}
+// 	for _, item := range record.CartItems {
+// 		cartItemsDomain = append(cartItemsDomain, item.ToItemsDomain())
+// 	}
+// 	return admin.CartsDomain{
+// 		ID:         record.ID,
+// 		CreatedAt:  record.CreatedAt,
+// 		UpdatedAt:  record.UpdatedAt,
+// 		DeletedAt:  record.DeletedAt,
+// 		CustomerID: record.CustomerID,
+// 		CartItems:  cartItemsDomain,
+// 		Total:      record.Total,
+// 	}
+// }
+
+// func FromCartsDomain(domain *admin.CartsDomain) *Carts {
+// 	cartItems := []CartItems{}
+// 	for _, item := range domain.CartItems {
+// 		cartItems = append(cartItems, *FromCartItemsDomain(&item))
+// 	}
+
+// 	return &Carts{
+// 		ID:         domain.ID,
+// 		CreatedAt:  domain.CreatedAt,
+// 		UpdatedAt:  domain.UpdatedAt,
+// 		DeletedAt:  domain.DeletedAt,
+// 		CustomerID: domain.CustomerID,
+// 		CartItems:  cartItems,
+// 		Total:      domain.Total,
+// 	}
+// }

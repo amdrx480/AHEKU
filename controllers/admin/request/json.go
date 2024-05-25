@@ -20,7 +20,6 @@ type AdminLogin struct {
 
 type AdminVoucher struct {
 	Voucher string `json:"voucher" validate:"required"`
-	// Password string `json:"password" validate:"required"`
 }
 
 type Customers struct {
@@ -70,14 +69,10 @@ type Purchases struct {
 	SellingPrice   int    `json:"selling_price"`
 }
 
-type Items struct {
-	CartID   uint `json:"cart_id" validate:"required"`
-	StockID  uint `json:"stock_id" validate:"required"`
-	Quantity int  `json:"quantity" validate:"required"`
-}
-
-type Carts struct {
+type CartItems struct {
 	CustomerID uint `json:"customer_id" validate:"required"`
+	StockID    uint `json:"stock_id" validate:"required"`
+	Quantity   int  `json:"quantity" validate:"required"`
 }
 
 func (req *AdminRegistration) ToAdminRegistrationDomain() *admin.AdminsDomain {
@@ -98,7 +93,6 @@ func (req *AdminLogin) ToAdminLoginDomain() *admin.AdminsDomain {
 func (req *AdminVoucher) ToAdminVoucherDomain() *admin.AdminsDomain {
 	return &admin.AdminsDomain{
 		Voucher: req.Voucher,
-		// Password: req.Password,
 	}
 }
 
@@ -160,17 +154,11 @@ func (req *Purchases) ToPurchasesDomain() *admin.PurchasesDomain {
 	}
 }
 
-func (req *Items) ToItemsDomain() *admin.ItemsDomain {
-	return &admin.ItemsDomain{
-		CartID:   req.CartID,
-		StockID:  req.StockID,
-		Quantity: req.Quantity,
-	}
-}
-
-func (req *Carts) ToCartsDomain() *admin.CartsDomain {
-	return &admin.CartsDomain{
+func (req *CartItems) ToCartItemsDomain() *admin.CartItemsDomain {
+	return &admin.CartItemsDomain{
 		CustomerID: req.CustomerID,
+		StockID:    req.StockID,
+		Quantity:   req.Quantity,
 	}
 }
 
@@ -254,15 +242,7 @@ func (req *Purchases) Validate() error {
 	return err
 }
 
-func (req *Items) Validate() error {
-	validate := validator.New()
-
-	err := validate.Struct(req)
-
-	return err
-}
-
-func (req *Carts) Validate() error {
+func (req *CartItems) Validate() error {
 	validate := validator.New()
 
 	err := validate.Struct(req)

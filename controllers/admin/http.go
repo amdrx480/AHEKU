@@ -435,8 +435,8 @@ func (sc *AuthController) StocksGetAll(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all categories", categories)
 }
 
-func (sc *AuthController) ItemsCreate(c echo.Context) error {
-	input := request.Items{}
+func (sc *AuthController) CartItemsCreate(c echo.Context) error {
+	input := request.CartItems{}
 	ctx := c.Request().Context()
 
 	if err := c.Bind(&input); err != nil {
@@ -449,52 +449,72 @@ func (sc *AuthController) ItemsCreate(c echo.Context) error {
 	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	// }
 
-	items, err := sc.authUseCase.ItemsCreate(ctx, input.ToItemsDomain())
+	items, err := sc.authUseCase.CartItemsCreate(ctx, input.ToCartItemsDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a items", "")
 	}
 
-	return controllers.NewResponse(c, http.StatusCreated, false, "items registered", response.FromItemsDomain(items))
+	return controllers.NewResponse(c, http.StatusCreated, false, "items registered", response.FromCartItemsDomain(items))
 }
 
-func (sc *AuthController) ItemsGetByID(c echo.Context) error {
+func (sc *AuthController) CartItemsGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	itemsID := c.Param("id")
 
-	items, err := sc.authUseCase.ItemsGetByID(ctx, itemsID)
+	items, err := sc.authUseCase.CartItemsGetByID(ctx, itemsID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "items not found", "")
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "items found", response.FromItemsDomain(items))
+	return controllers.NewResponse(c, http.StatusOK, false, "items found", response.FromCartItemsDomain(items))
 }
 
-func (sc *AuthController) ItemsGetAll(c echo.Context) error {
+func (sc *AuthController) CartItemsGetByCustomerID(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	itemsData, err := sc.authUseCase.ItemsGetAll(ctx)
+	customerID := c.Param("customer_id")
+
+	cartitems, err := sc.authUseCase.CartItemsGetByCustomerID(ctx, customerID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusNotFound, true, "items not found", "")
+	}
+
+	cartItemsResponse := []response.CartItems{}
+
+	for _, items := range cartitems {
+		cartItemsResponse = append(cartItemsResponse, response.FromCartItemsDomain(items))
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "all cartItems", cartItemsResponse)
+}
+
+func (sc *AuthController) CartItemsGetAll(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	itemsData, err := sc.authUseCase.CartItemsGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
 	}
 
-	itemsResponse := []response.Items{}
+	itemsResponse := []response.CartItems{}
 
 	for _, items := range itemsData {
-		itemsResponse = append(itemsResponse, response.FromItemsDomain(items))
+		itemsResponse = append(itemsResponse, response.FromCartItemsDomain(items))
 	}
 
 	return controllers.NewResponse(c, http.StatusOK, false, "all items", itemsResponse)
 }
 
-func (sc *AuthController) ItemsDelete(c echo.Context) error {
+func (sc *AuthController) CartItemsDelete(c echo.Context) error {
 	categoryID := c.Param("id")
 	ctx := c.Request().Context()
 
-	err := sc.authUseCase.ItemsDelete(ctx, categoryID)
+	err := sc.authUseCase.CartItemsDelete(ctx, categoryID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, false, "failed to delete a items", "")
@@ -503,70 +523,70 @@ func (sc *AuthController) ItemsDelete(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "items deleted", "")
 }
 
-func (sc *AuthController) CartsCreate(c echo.Context) error {
-	input := request.Carts{}
-	ctx := c.Request().Context()
+// func (sc *AuthController) CartsCreate(c echo.Context) error {
+// 	input := request.Carts{}
+// 	ctx := c.Request().Context()
 
-	if err := c.Bind(&input); err != nil {
-		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
-	}
+// 	if err := c.Bind(&input); err != nil {
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	}
 
-	// err := input.Validate()
+// 	// err := input.Validate()
 
-	// if err != nil {
-	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
-	// }
+// 	// if err != nil {
+// 	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	// }
 
-	items, err := sc.authUseCase.CartsCreate(ctx, input.ToCartsDomain())
+// 	items, err := sc.authUseCase.CartsCreate(ctx, input.ToCartsDomain())
 
-	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a cart", "")
-	}
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a cart", "")
+// 	}
 
-	return controllers.NewResponse(c, http.StatusCreated, false, "cart registered", response.FromCartsDomain(items))
-}
+// 	return controllers.NewResponse(c, http.StatusCreated, false, "cart registered", response.FromCartsDomain(items))
+// }
 
-func (sc *AuthController) CartsGetByID(c echo.Context) error {
-	ctx := c.Request().Context()
+// func (sc *AuthController) CartsGetByID(c echo.Context) error {
+// 	ctx := c.Request().Context()
 
-	itemsID := c.Param("id")
+// 	itemsID := c.Param("id")
 
-	items, err := sc.authUseCase.CartsGetByID(ctx, itemsID)
+// 	items, err := sc.authUseCase.CartsGetByID(ctx, itemsID)
 
-	if err != nil {
-		return controllers.NewResponse(c, http.StatusNotFound, true, "cart not found", "")
-	}
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, "cart not found", "")
+// 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "cart found", response.FromCartsDomain(items))
-}
+// 	return controllers.NewResponse(c, http.StatusOK, false, "cart found", response.FromCartsDomain(items))
+// }
 
-func (sc *AuthController) CartsGetAll(c echo.Context) error {
-	ctx := c.Request().Context()
+// func (sc *AuthController) CartsGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
 
-	itemsData, err := sc.authUseCase.CartsGetAll(ctx)
+// 	itemsData, err := sc.authUseCase.CartsGetAll(ctx)
 
-	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
-	}
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
+// 	}
 
-	itemsResponse := []response.Carts{}
+// 	itemsResponse := []response.Carts{}
 
-	for _, items := range itemsData {
-		itemsResponse = append(itemsResponse, response.FromCartsDomain(items))
-	}
+// 	for _, items := range itemsData {
+// 		itemsResponse = append(itemsResponse, response.FromCartsDomain(items))
+// 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "all cart", itemsResponse)
-}
+// 	return controllers.NewResponse(c, http.StatusOK, false, "all cart", itemsResponse)
+// }
 
-func (sc *AuthController) CartsDelete(c echo.Context) error {
-	categoryID := c.Param("id")
-	ctx := c.Request().Context()
+// func (sc *AuthController) CartsDelete(c echo.Context) error {
+// 	categoryID := c.Param("id")
+// 	ctx := c.Request().Context()
 
-	err := sc.authUseCase.CartsDelete(ctx, categoryID)
+// 	err := sc.authUseCase.CartsDelete(ctx, categoryID)
 
-	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, false, "failed to delete a cart", "")
-	}
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, false, "failed to delete a cart", "")
+// 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "cart deleted", "")
-}
+// 	return controllers.NewResponse(c, http.StatusOK, false, "cart deleted", "")
+// }
