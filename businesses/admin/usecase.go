@@ -144,6 +144,14 @@ func (usecase *adminUsecase) CartItemsDelete(ctx context.Context, id string) err
 	return usecase.adminRepository.CartItemsDelete(ctx, id)
 }
 
+func (usecase *adminUsecase) ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error) {
+	return usecase.adminRepository.ItemTransactionsCreate(ctx, itemTransactionsDomain, id)
+}
+
+func (usecase *adminUsecase) ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error) {
+	return usecase.adminRepository.ItemTransactionsGetAll(ctx)
+}
+
 // func (usecase *adminUsecase) CartsCreate(ctx context.Context, cartItemsDomain *CartsDomain) (CartsDomain, error) {
 // 	return usecase.adminRepository.CartsCreate(ctx, cartItemsDomain)
 // }

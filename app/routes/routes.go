@@ -73,6 +73,10 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	items.GET("/customer/:customer_id", cl.AdminController.CartItemsGetByCustomerID)
 	items.GET("", cl.AdminController.CartItemsGetAll)
 	items.DELETE("/:id", cl.AdminController.CartItemsDelete)
+
+	itemTransactions := e.Group("item_transactions")
+	itemTransactions.POST("", cl.AdminController.ItemTransactionsCreate)
+	itemTransactions.GET("", cl.AdminController.ItemTransactionsGetAll)
 	// items.POST("/to_history", cl.ItemsController.ToHistory)
 
 	// carts := e.Group("carts", echojwt.WithConfig(cl.JWTMiddleware))

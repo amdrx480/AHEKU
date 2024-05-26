@@ -112,6 +112,17 @@ type CartItems struct {
 	SubTotal int `json:"sub_total"`
 }
 
+type ItemTransactions struct {
+	ID         uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+	CustomerID uint           `json:"customer_id"`
+	StockID    uint           `json:"stock_id"`
+	Quantity   int            `json:"quantity"`
+	SubTotal   int            `json:"sub_total"`
+}
+
 func (record *Admins) ToAdminsDomain() admin.AdminsDomain {
 	return admin.AdminsDomain{
 		ID:        record.ID,
@@ -341,6 +352,29 @@ func FromCartItemsDomain(domain *admin.CartItemsDomain) *CartItems {
 		Quantity: domain.Quantity,
 		Price:    domain.Price,
 		SubTotal: domain.SubTotal,
+	}
+}
+
+func (record *ItemTransactions) ToItemTransactionsDomain() admin.ItemTransactionsDomain {
+	return admin.ItemTransactionsDomain{
+		ID:         record.ID,
+		CreatedAt:  record.CreatedAt,
+		DeletedAt:  record.DeletedAt,
+		CustomerID: record.CustomerID,
+		StockID:    record.StockID,
+		Quantity:   record.Quantity,
+		SubTotal:   record.SubTotal,
+	}
+}
+
+func FromItemTransactionsDomain(domain *admin.ItemTransactionsDomain) *ItemTransactions {
+	return &ItemTransactions{
+		ID:        domain.ID,
+		CreatedAt: domain.CreatedAt,
+		DeletedAt: domain.DeletedAt,
+		StockID:   domain.StockID,
+		Quantity:  domain.Quantity,
+		SubTotal:  domain.SubTotal,
 	}
 }
 

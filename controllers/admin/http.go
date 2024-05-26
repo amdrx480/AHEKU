@@ -517,10 +517,56 @@ func (sc *AuthController) CartItemsDelete(c echo.Context) error {
 	err := sc.authUseCase.CartItemsDelete(ctx, categoryID)
 
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, false, "failed to delete a items", "")
+		return controllers.NewResponseWithoutData(c, http.StatusInternalServerError, false, "failed to delete a items")
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "items deleted", "")
+	return controllers.NewResponseWithoutData(c, http.StatusOK, false, "items deleted")
+}
+
+func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
+	historyID := c.Param("id")
+	input := request.ItemTransactions{}
+	ctx := c.Request().Context()
+
+	if err := c.Bind(&input); err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	err := input.Validate()
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	// history, err := sc.salesUseCase.ToHistory(ctx, input.ToDomain(), historyID)
+	_, err = sc.authUseCase.ItemTransactionsCreate(ctx, input.ToItemTransactionsDomain(), historyID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Missing item transactions data", "")
+	}
+
+	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", _resHistory.FromDomain(history))
+	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", " ")
+	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "Success item transactions Data")
+
+}
+
+func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	historiesData, err := hc.authUseCase.ItemTransactionsGetAll(ctx)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch item transactions data", "")
+	}
+
+	histories := []response.ItemTransactions{}
+
+	for _, course := range historiesData {
+		histories = append(histories, response.FromItemTransactionsDomain(course))
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "all item transactions", histories)
 }
 
 // func (sc *AuthController) CartsCreate(c echo.Context) error {

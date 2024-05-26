@@ -42,7 +42,7 @@ func (config *DBConfig) InitDB() *gorm.DB {
 
 func MigrateDB(db *gorm.DB) {
 	// err := db.AutoMigrate(&admin.Admins{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{}, &admin.Carts{})
-	err := db.AutoMigrate(&admin.Admins{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{})
+	err := db.AutoMigrate(&admin.Admins{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{}, &admin.ItemTransactions{})
 
 	if err != nil {
 		log.Fatalf("failed to perform database migration: %s\n", err)
@@ -317,6 +317,158 @@ func SeedPurchasesData(db *gorm.DB) error {
 	// Log pesan sukses
 	log.Println("Purchases data seeded")
 	return nil
+}
+
+func SeedCartItemsData(db *gorm.DB) error {
+	cartItemsData := []admin.CartItems{
+		{
+			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
+			StockID:    1,
+			Quantity:   1,
+			Price:      1000,
+			SubTotal:   21000,
+		},
+		{
+			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
+			StockID:    1,
+			Quantity:   2,
+			Price:      2000,
+			SubTotal:   21000,
+		},
+		{
+			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
+			StockID:    1,
+			Quantity:   3,
+			Price:      3000,
+			SubTotal:   21000,
+		},
+		{
+			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
+			StockID:    1,
+			Quantity:   4,
+			Price:      4000,
+			SubTotal:   21000,
+		},
+		{
+			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
+			StockID:    1,
+			Quantity:   5,
+			Price:      5000,
+			SubTotal:   21000,
+		},
+		{
+			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
+			StockID:    1,
+			Quantity:   6,
+			Price:      6000,
+			SubTotal:   21000,
+		},
+
+		//
+
+		{
+			CustomerID: 2,
+			StockID:    2,
+			Quantity:   1,
+			Price:      2000,
+			SubTotal:   42000,
+		},
+
+		{
+			CustomerID: 2,
+			StockID:    2,
+			Quantity:   2,
+			Price:      4000,
+			SubTotal:   42000,
+		},
+
+		{
+			CustomerID: 2,
+			StockID:    2,
+			Quantity:   3,
+			Price:      6000,
+			SubTotal:   42000,
+		},
+		{
+			CustomerID: 2,
+			StockID:    2,
+			Quantity:   4,
+			Price:      8000,
+			SubTotal:   42000,
+		},
+		{
+			CustomerID: 2,
+			StockID:    2,
+			Quantity:   5,
+			Price:      10000,
+			SubTotal:   42000,
+		},
+		{
+			CustomerID: 2,
+			StockID:    2,
+			Quantity:   6,
+			Price:      12000,
+			SubTotal:   42000,
+		},
+	}
+
+	var record admin.CartItems
+	_ = db.First(&record)
+
+	if record.ID != 0 {
+		log.Printf("category detail already exists\n")
+	} else {
+		for _, cartItems := range cartItemsData {
+			result := db.Create(&cartItems)
+			if result.Error != nil {
+				return result.Error
+			}
+		}
+		log.Printf("%d category detail created\n", len(cartItemsData))
+	}
+
+	return nil
+
+	// // Masukkan data ke dalam tabel purchases
+	// for _, cartItems := range cartItemsData {
+	// 	result := db.Create(&cartItems)
+	// 	if result.Error != nil {
+	// 		return result.Error
+	// 	}
+
+	// 	// Setelah berhasil membuat pembelian, perbarui atau tambahkan stok
+
+	// 	// err := db.Where("stock_code = ? AND units_name = ?", purchase.StockCode, purchase.UnitName).
+	// 	err := db.Where(" stock_id = ? AND customer_id", cartItems.CustomerID, cartItems.StockID).
+	// 		First(&stock).Error
+	// 	if err == gorm.ErrRecordNotFound {
+	// 		// Jika stok belum ada, buat stok baru
+	// 		newStock := admin.Stocks{
+	// 			CustomerID:  purchase.StockName,
+	// 			StockID:  purchase.StockCode,
+	// 			Quantity: purchase.CategoryID,
+	// 			// CategoryName: purchase.Categories.CategoryName,
+	// 			UnitID: purchase.UnitID,
+	// 			// UnitName:     purchase.UnitName,
+	// 			Description:  purchase.Description,
+	// 			StockTotal:   purchase.Quantity, // Jumlah yang dibeli ditambahkan ke stok total
+	// 			SellingPrice: purchase.SellingPrice,
+	// 		}
+	// 		db.Create(&newStock)
+	// 	} else {
+	// 		// Jika ada kesalahan lain, kembalikan error
+	// 		return err
+	// 	}
+	// }
+	// // else if err == nil {
+	// // 	// Jika stok sudah ada, perbarui stok total
+	// // 	stock.StockTotal += purchase.Quantity // Tambahkan jumlah yang dibeli ke stok total
+	// // 	db.Save(&stock)
+	// // }
+
+	// // Log pesan sukses
+	// log.Println("Purchases data seeded")
+	// return nil
 }
 
 func SeedStocksData(db *gorm.DB) error {

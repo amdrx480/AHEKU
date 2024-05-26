@@ -75,6 +75,12 @@ type CartItems struct {
 	Quantity   int  `json:"quantity" validate:"required"`
 }
 
+type ItemTransactions struct {
+	StockID  uint `json:"stock_id" `
+	Quantity int  `json:"quantity" `
+	SubTotal int  `json:"sub_total" `
+}
+
 func (req *AdminRegistration) ToAdminRegistrationDomain() *admin.AdminsDomain {
 	return &admin.AdminsDomain{
 		Name:     req.Name,
@@ -162,6 +168,14 @@ func (req *CartItems) ToCartItemsDomain() *admin.CartItemsDomain {
 	}
 }
 
+func (req *ItemTransactions) ToItemTransactionsDomain() *admin.ItemTransactionsDomain {
+	return &admin.ItemTransactionsDomain{
+		StockID:  req.StockID,
+		Quantity: req.Quantity,
+		SubTotal: req.SubTotal,
+	}
+}
+
 func validateRequest(req interface{}) error {
 	validate := validator.New()
 	validate.RegisterValidation("NotEmpty", NotEmpty)
@@ -243,6 +257,14 @@ func (req *Purchases) Validate() error {
 }
 
 func (req *CartItems) Validate() error {
+	validate := validator.New()
+
+	err := validate.Struct(req)
+
+	return err
+}
+
+func (req *ItemTransactions) Validate() error {
 	validate := validator.New()
 
 	err := validate.Struct(req)

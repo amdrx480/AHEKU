@@ -49,6 +49,8 @@ func main() {
 	_dbDriver.SeedUnitsData(db)
 
 	_dbDriver.SeedPurchasesData(db)
+	_dbDriver.SeedCartItemsData(db)
+
 	// _dbDriver.SeedStocksData(db)
 
 	_dbDriver.MigrateDB(db)

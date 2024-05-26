@@ -115,6 +115,17 @@ type CartItemsDomain struct {
 	SubTotal     int
 }
 
+type ItemTransactionsDomain struct {
+	ID         uint
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt
+	CustomerID uint
+	StockID    uint
+	Quantity   int
+	SubTotal   int
+}
+
 // One Carts To Many CartItems
 // type CartsDomain struct {
 // 	ID         uint
@@ -169,9 +180,11 @@ type Usecase interface {
 	CartItemsGetByID(ctx context.Context, id string) (CartItemsDomain, error)
 	// CartItemsGetByCustomerID(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error)
 	CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error)
-
 	CartItemsGetAll(ctx context.Context) ([]CartItemsDomain, error)
 	CartItemsDelete(ctx context.Context, id string) error
+
+	ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
+	ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error)
 
 	// Carts
 	// CartsGetByID(ctx context.Context, id string) (CartsDomain, error)
@@ -224,6 +237,9 @@ type Repository interface {
 	CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error)
 	CartItemsGetAll(ctx context.Context) ([]CartItemsDomain, error)
 	CartItemsDelete(ctx context.Context, id string) error
+
+	ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
+	ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error)
 
 	// Carts
 	// CartsGetByID(ctx context.Context, id string) (CartsDomain, error)

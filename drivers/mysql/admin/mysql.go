@@ -468,8 +468,8 @@ func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admi
 	}
 
 	subTotal := record.Price
-	for _, sale := range customerCartItems {
-		subTotal += sale.Price
+	for _, cartItems := range customerCartItems {
+		subTotal += cartItems.Price
 	}
 	record.SubTotal = subTotal
 
@@ -480,9 +480,9 @@ func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admi
 	}
 
 	// Perbarui SubTotal untuk semua penjualan lainnya dari pelanggan yang sama
-	for _, sale := range customerCartItems {
-		sale.SubTotal = subTotal
-		if err := pr.conn.WithContext(ctx).Save(&sale).Error; err != nil {
+	for _, cartItems := range customerCartItems {
+		cartItems.SubTotal = subTotal
+		if err := pr.conn.WithContext(ctx).Save(&cartItems).Error; err != nil {
 			return admin.CartItemsDomain{}, err
 		}
 	}
@@ -498,8 +498,8 @@ func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admi
 	// }
 
 	// totalAllPrice := record.SubTotal
-	// for _, sale := range allCartItems {
-	// 	totalAllPrice += sale.Price
+	// for _, cartItems := range allCartItems {
+	// 	totalAllPrice += cartItems.Price
 	// }
 	// record.SubTotal = totalAllPrice
 
@@ -510,9 +510,9 @@ func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admi
 	// }
 
 	// // Perbarui TotalAllPrice untuk semua penjualan lainnya
-	// for _, sale := range allCartItems {
-	// 	sale.SubTotal = totalAllPrice
-	// 	if err := pr.conn.WithContext(ctx).Save(&sale).Error; err != nil {
+	// for _, cartItems := range allCartItems {
+	// 	cartItems.SubTotal = totalAllPrice
+	// 	if err := pr.conn.WithContext(ctx).Save(&cartItems).Error; err != nil {
 	// 		return admin.CartItemsDomain{}, err
 	// 	}
 	// }
@@ -573,7 +573,9 @@ func (sr *adminRepository) CartItemsGetByCustomerID(ctx context.Context, custome
 func (sr *adminRepository) CartItemsGetAll(ctx context.Context) ([]admin.CartItemsDomain, error) {
 	var records []CartItems
 	if err := sr.conn.WithContext(ctx).
-		Preload("Customers").Preload("Stocks").Preload("Categories").
+		Preload("Customers").
+		Preload("Stocks").
+		// Preload("Categories").
 		Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -626,6 +628,7 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 	}
 
 	// Hapus data item keranjang
+	// Gunakan Unscope untuk menghapus data secara permanent
 	if err := sr.conn.WithContext(ctx).Unscoped().Delete(&deletedItems).Error; err != nil {
 		return err
 	}
@@ -663,6 +666,76 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 	// }
 
 	// return nil
+}
+
+func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *admin.ItemTransactionsDomain, id string) (admin.ItemTransactionsDomain, error) {
+	record := FromItemTransactionsDomain(itemTransactionsDomain)
+	var cartItemsData []CartItems
+
+	// Ambil semua data penjualan
+	if err := sr.conn.WithContext(ctx).Find(&cartItemsData).Error; err != nil {
+		return admin.ItemTransactionsDomain{}, err
+	}
+
+	for _, cartItems := range cartItemsData {
+		// Periksa stok yang terkait dengan penjualan
+		var stock Stocks
+		if err := sr.conn.WithContext(ctx).Where("id = ?", cartItems.StockID).First(&stock).Error; err != nil {
+			return admin.ItemTransactionsDomain{}, err
+		}
+
+		// Kurangi stok dengan jumlah yang dijual
+		if stock.StockTotal < cartItems.Quantity {
+			errMsg := fmt.Sprintf("stok tidak cukup untuk penjualan dengan stock_id %d", record.StockID)
+			log.Println(errMsg)
+			return admin.ItemTransactionsDomain{}, fmt.Errorf(errMsg)
+		}
+		stock.StockTotal -= cartItems.Quantity
+
+		// Simpan perubahan stok ke database
+		if err := sr.conn.WithContext(ctx).Save(&stock).Error; err != nil {
+			return admin.ItemTransactionsDomain{}, err
+		}
+
+		// Buat catatan itemTransactions
+		itemTransactionsRecord := ItemTransactions{
+			CustomerID: cartItems.CustomerID,
+			StockID:    cartItems.StockID,
+			Quantity:   cartItems.Quantity,
+			SubTotal:   cartItems.SubTotal,
+			// Sesuaikan dengan kolom lain jika perlu
+		}
+
+		// Simpan catatan itemTransactions
+		if err := sr.conn.WithContext(ctx).Create(&itemTransactionsRecord).Error; err != nil {
+			return admin.ItemTransactionsDomain{}, err
+		}
+	}
+
+	// Hapus semua data penjualan sekaligus
+	if err := sr.conn.WithContext(ctx).Unscoped().Delete(cartItemsData).Error; err != nil {
+		return admin.ItemTransactionsDomain{}, err
+	}
+
+	return record.ToItemTransactionsDomain(), nil
+}
+
+func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.ItemTransactionsDomain, error) {
+	var records []ItemTransactions
+
+	err := cr.conn.WithContext(ctx).Find(&records).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	stockitemTransactions := []admin.ItemTransactionsDomain{}
+
+	for _, stockHistory := range records {
+		stockitemTransactions = append(stockitemTransactions, stockHistory.ToItemTransactionsDomain())
+	}
+
+	return stockitemTransactions, nil
 }
 
 // func (ir *adminRepository) CartsCreate(ctx context.Context, cartDomain *admin.CartsDomain) (admin.CartsDomain, error) {
