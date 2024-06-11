@@ -472,6 +472,9 @@ func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admi
 		subTotal += cartItems.Price
 	}
 	record.SubTotal = subTotal
+	// record.UnitsID = itemDomain.UnitsID
+	// record.Stocks.UnitID = record.UnitsID
+	// record.UnitsID = record.UnitsID
 
 	// Simpan catatan penjualan
 	result := pr.conn.WithContext(ctx).Create(&record)
@@ -522,7 +525,11 @@ func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admi
 func (sr *adminRepository) CartItemsGetByID(ctx context.Context, id string) (admin.CartItemsDomain, error) {
 	var item CartItems
 
-	if err := sr.conn.WithContext(ctx).Preload("Customers").Preload("Stocks").First(&item, "id = ?", id).Error; err != nil {
+	if err := sr.conn.WithContext(ctx).
+		Preload("Customers").
+		Preload("Stocks").
+		Preload("Stocks.Units").
+		First(&item, "id = ?", id).Error; err != nil {
 		return admin.CartItemsDomain{}, err
 	}
 
@@ -546,27 +553,44 @@ func (sr *adminRepository) CartItemsGetByID(ctx context.Context, id string) (adm
 // }
 
 // Sulit-Sulit :v
-func (sr *adminRepository) CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]admin.CartItemsDomain, error) {
+func (sr *adminRepository) CartItemsGetAllByCustomerID(ctx context.Context, customerId string) ([]admin.CartItemsDomain, error) {
 	var cartItems []CartItems
 
-	// if err := sr.conn.WithContext(ctx).Preload("Customers").Preload("Stocks").First(&item, "customer_id = ?", cartItemsDomain.CustomerID).Error; err != nil {
 	if err := sr.conn.WithContext(ctx).
 		Preload("Customers").
 		Preload("Stocks").
-		Where("customer_id  = ?", customerId).
+		Preload("Stocks.Units").
+		Where("customer_id = ?", customerId).
 		Find(&cartItems).Error; err != nil {
+		// return nil, err
 		return nil, err
 	}
 
-	cartItemsDomain := make([]admin.CartItemsDomain, len(cartItems))
+	// Komentar Ini Jangan Di Hapus
+	// Jika customer tidak ada data cartItems yang ditemukan, kembalikan error
+	// if len(cartItems) == 0 {
+	// 	return nil, fmt.Errorf("no cart items found for customer with ID %s", customerId)
+	// }
 
-	for i, purchase := range cartItems {
+	cartItemsDomain := []admin.CartItemsDomain{}
+
+	for _, purchase := range cartItems {
 		// Konversi ke domain
-		// domain := purchase.ToCartItemsDomain()
-		cartItemsDomain[i] = purchase.ToCartItemsDomain()
-	}
+		domain := purchase.ToCartItemsDomain()
+		cartItemsDomain = append(cartItemsDomain, domain)
 
+	}
 	return cartItemsDomain, nil
+
+	// cartItemsDomain := make([]admin.CartItemsDomain, len(cartItems))
+
+	// for i, purchase := range cartItems {
+	// 	// Konversi ke domain
+	// 	// domain := purchase.ToCartItemsDomain()
+	// 	cartItemsDomain[i] = purchase.ToCartItemsDomain()
+	// }
+
+	// return cartItemsDomain, nil
 
 }
 
@@ -575,7 +599,7 @@ func (sr *adminRepository) CartItemsGetAll(ctx context.Context) ([]admin.CartIte
 	if err := sr.conn.WithContext(ctx).
 		Preload("Customers").
 		Preload("Stocks").
-		// Preload("Categories").
+		Preload("Stocks.Units").
 		Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -668,13 +692,20 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 	// return nil
 }
 
-func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *admin.ItemTransactionsDomain, id string) (admin.ItemTransactionsDomain, error) {
-	record := FromItemTransactionsDomain(itemTransactionsDomain)
+func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, customerId string) (admin.ItemTransactionsDomain, error) {
+
 	var cartItemsData []CartItems
 
-	// Ambil semua data penjualan
-	if err := sr.conn.WithContext(ctx).Find(&cartItemsData).Error; err != nil {
+	// Ambil semua data penjualan berdasarkan customerID
+	if err := sr.conn.WithContext(ctx).
+		Where("customer_id = ?", customerId).
+		Find(&cartItemsData).Error; err != nil {
 		return admin.ItemTransactionsDomain{}, err
+	}
+
+	// Jika tidak ada item dalam keranjang, kembalikan error
+	if len(cartItemsData) == 0 {
+		return admin.ItemTransactionsDomain{}, fmt.Errorf("no cart items found for customer with ID %s", customerId)
 	}
 
 	for _, cartItems := range cartItemsData {
@@ -686,7 +717,7 @@ func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, itemTrans
 
 		// Kurangi stok dengan jumlah yang dijual
 		if stock.StockTotal < cartItems.Quantity {
-			errMsg := fmt.Sprintf("stok tidak cukup untuk penjualan dengan stock_id %d", record.StockID)
+			errMsg := fmt.Sprintf("stok tidak cukup untuk penjualan dengan stock_id %d", cartItems.StockID)
 			log.Println(errMsg)
 			return admin.ItemTransactionsDomain{}, fmt.Errorf(errMsg)
 		}
@@ -702,6 +733,7 @@ func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, itemTrans
 			CustomerID: cartItems.CustomerID,
 			StockID:    cartItems.StockID,
 			Quantity:   cartItems.Quantity,
+			Price:      cartItems.Price,
 			SubTotal:   cartItems.SubTotal,
 			// Sesuaikan dengan kolom lain jika perlu
 		}
@@ -712,30 +744,32 @@ func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, itemTrans
 		}
 	}
 
-	// Hapus semua data penjualan sekaligus
-	if err := sr.conn.WithContext(ctx).Unscoped().Delete(cartItemsData).Error; err != nil {
+	// Hapus semua data penjualan yang terkait dengan customerID
+	if err := sr.conn.WithContext(ctx).Where("customer_id = ?", customerId).Unscoped().Delete(&CartItems{}).Error; err != nil {
 		return admin.ItemTransactionsDomain{}, err
 	}
 
-	return record.ToItemTransactionsDomain(), nil
+	return admin.ItemTransactionsDomain{}, nil
 }
 
 func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.ItemTransactionsDomain, error) {
 	var records []ItemTransactions
-
-	err := cr.conn.WithContext(ctx).Find(&records).Error
-
-	if err != nil {
+	if err := cr.conn.WithContext(ctx).
+		Preload("Customers").
+		Preload("Stocks").
+		Preload("Stocks.Units").
+		Preload("Stocks.Categories").
+		Find(&records).Error; err != nil {
 		return nil, err
 	}
 
-	stockitemTransactions := []admin.ItemTransactionsDomain{}
+	itemTransactionsDomain := []admin.ItemTransactionsDomain{}
 
 	for _, stockHistory := range records {
-		stockitemTransactions = append(stockitemTransactions, stockHistory.ToItemTransactionsDomain())
+		itemTransactionsDomain = append(itemTransactionsDomain, stockHistory.ToItemTransactionsDomain())
 	}
 
-	return stockitemTransactions, nil
+	return itemTransactionsDomain, nil
 }
 
 // func (ir *adminRepository) CartsCreate(ctx context.Context, cartDomain *admin.CartsDomain) (admin.CartsDomain, error) {

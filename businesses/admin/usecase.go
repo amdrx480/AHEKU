@@ -128,8 +128,8 @@ func (usecase *adminUsecase) CartItemsGetByID(ctx context.Context, id string) (C
 	return usecase.adminRepository.CartItemsGetByID(ctx, id)
 }
 
-func (usecase *adminUsecase) CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error) {
-	return usecase.adminRepository.CartItemsGetByCustomerID(ctx, customerId)
+func (usecase *adminUsecase) CartItemsGetAllByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error) {
+	return usecase.adminRepository.CartItemsGetAllByCustomerID(ctx, customerId)
 }
 
 func (usecase *adminUsecase) CartItemsCreate(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error) {
@@ -144,8 +144,13 @@ func (usecase *adminUsecase) CartItemsDelete(ctx context.Context, id string) err
 	return usecase.adminRepository.CartItemsDelete(ctx, id)
 }
 
-func (usecase *adminUsecase) ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error) {
-	return usecase.adminRepository.ItemTransactionsCreate(ctx, itemTransactionsDomain, id)
+// func (usecase *adminUsecase) ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error) {
+// 	// func (usecase *adminUsecase) ItemTransactionsCreate(ctx context.Context, id string) (ItemTransactionsDomain, error) {
+// 	return usecase.adminRepository.ItemTransactionsCreate(ctx, itemTransactionsDomain, id)
+// }
+
+func (uc *adminUsecase) ItemTransactionsCreate(ctx context.Context, customerId string) (ItemTransactionsDomain, error) {
+	return uc.adminRepository.ItemTransactionsCreate(ctx, customerId)
 }
 
 func (usecase *adminUsecase) ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error) {

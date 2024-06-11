@@ -63,21 +63,20 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 
 	// purchases := e.Group("purchases", echojwt.WithConfig(cl.JWTMiddleware))
 	purchases := e.Group("purchases")
-	purchases.GET("/:id", cl.AdminController.PurchasesCreate)
 	purchases.POST("", cl.AdminController.PurchasesCreate)
+	purchases.GET("/:id", cl.AdminController.PurchasesGetByID)
 	purchases.GET("", cl.AdminController.PurchasesGetAll)
 
 	items := e.Group("cart_items")
 	items.POST("", cl.AdminController.CartItemsCreate)
 	items.GET("/:id", cl.AdminController.CartItemsGetByID)
-	items.GET("/customer/:customer_id", cl.AdminController.CartItemsGetByCustomerID)
+	items.GET("/customer/:customer_id", cl.AdminController.CartItemsGetAllByCustomerID)
 	items.GET("", cl.AdminController.CartItemsGetAll)
 	items.DELETE("/:id", cl.AdminController.CartItemsDelete)
 
 	itemTransactions := e.Group("item_transactions")
-	itemTransactions.POST("", cl.AdminController.ItemTransactionsCreate)
+	itemTransactions.POST("/:customer_id", cl.AdminController.ItemTransactionsCreate)
 	itemTransactions.GET("", cl.AdminController.ItemTransactionsGetAll)
-	// items.POST("/to_history", cl.ItemsController.ToHistory)
 
 	// carts := e.Group("carts", echojwt.WithConfig(cl.JWTMiddleware))
 	// carts := e.Group("carts")
@@ -86,11 +85,7 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	// carts.GET("", cl.AdminController.CartsGetAll)
 	// carts.DELETE("/:id", cl.AdminController.CartsDelete)
 
-	// units := e.Group("units", echojwt.WithConfig(cl.JWTMiddleware))
-	history := e.Group("history")
-	history.POST("", cl.HistoryController.Create)
-	history.GET("", cl.HistoryController.GetAll)
-
-	// vendors := e.Group("vendors", echojwt.WithConfig(cl.JWTMiddleware))
-
+	// history := e.Group("history")
+	// history.POST("", cl.HistoryController.Create)
+	// history.GET("", cl.HistoryController.GetAll)
 }

@@ -5,6 +5,7 @@ import (
 	"backend-golang/controllers"
 	"backend-golang/controllers/admin/request"
 	"backend-golang/controllers/admin/response"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -72,23 +73,23 @@ func (ctrl *AuthController) AdminVoucher(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	if err := c.Bind(&adminInput); err != nil {
-		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid voucher request", "")
+		return controllers.NewResponseLoginVoucher(c, http.StatusBadRequest, true, "invalid voucher request", "")
 	}
 
 	err := adminInput.Validate()
 
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusBadRequest, true, "validation voucher failed", "")
+		return controllers.NewResponseLoginVoucher(c, http.StatusBadRequest, true, "validation voucher failed", "")
 	}
 	voucherResult, err := ctrl.authUseCase.AdminVoucher(ctx, adminInput.ToAdminVoucherDomain())
 
 	var isFailed bool = err != nil || voucherResult == ""
 
 	if isFailed {
-		return controllers.NewResponse(c, http.StatusUnauthorized, true, "invalid voucher or password", "")
+		return controllers.NewResponseLoginVoucher(c, http.StatusUnauthorized, true, "invalid voucher or password", "")
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "voucher success", voucherResult)
+	return controllers.NewResponseLoginVoucher(c, http.StatusOK, false, "voucher success", voucherResult)
 }
 
 func (cc *AuthController) CustomersGetByID(c echo.Context) error {
@@ -365,19 +366,19 @@ func (cc *AuthController) PurchasesGetByID(c echo.Context) error {
 func (pc *AuthController) PurchasesGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	categoriesData, err := pc.authUseCase.PurchasesGetAll(ctx)
+	purchasesData, err := pc.authUseCase.PurchasesGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
 	}
 
-	categories := []response.Purchases{}
+	purchases := []response.Purchases{}
 
-	for _, category := range categoriesData {
-		categories = append(categories, response.FromPurchasesDomain(category))
+	for _, purchase := range purchasesData {
+		purchases = append(purchases, response.FromPurchasesDomain(purchase))
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "all categories", categories)
+	return controllers.NewResponse(c, http.StatusOK, false, "all purchases", purchases)
 }
 
 func (sc *AuthController) StocksCreate(c echo.Context) error {
@@ -472,12 +473,12 @@ func (sc *AuthController) CartItemsGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "items found", response.FromCartItemsDomain(items))
 }
 
-func (sc *AuthController) CartItemsGetByCustomerID(c echo.Context) error {
+func (sc *AuthController) CartItemsGetAllByCustomerID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	customerID := c.Param("customer_id")
 
-	cartitems, err := sc.authUseCase.CartItemsGetByCustomerID(ctx, customerID)
+	cartitems, err := sc.authUseCase.CartItemsGetAllByCustomerID(ctx, customerID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "items not found", "")
@@ -491,6 +492,26 @@ func (sc *AuthController) CartItemsGetByCustomerID(c echo.Context) error {
 
 	return controllers.NewResponse(c, http.StatusOK, false, "all cartItems", cartItemsResponse)
 }
+
+// func (sc *AuthController) CartItemsGetByCustomerID(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	customerID := c.Param("customer_id")
+
+// 	cartitems, err := sc.authUseCase.CartItemsGetByCustomerID(ctx, customerID)
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, "items not found", "")
+// 	}
+
+// 	cartItemsResponse := []response.CartItems{}
+
+// 	for _, items := range cartitems {
+// 		cartItemsResponse = append(cartItemsResponse, response.FromCartItemsDomain(items))
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "all cartItems", cartItemsResponse)
+// }
 
 func (sc *AuthController) CartItemsGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -524,32 +545,48 @@ func (sc *AuthController) CartItemsDelete(c echo.Context) error {
 }
 
 func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
-	historyID := c.Param("id")
-	input := request.ItemTransactions{}
+	customerID := c.Param("customer_id") // Ambil customer_id dari parameter URL
 	ctx := c.Request().Context()
 
-	if err := c.Bind(&input); err != nil {
-		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
-	}
-
-	err := input.Validate()
+	// Panggil use case untuk memproses transaksi berdasarkan customerID
+	_, err := sc.authUseCase.ItemTransactionsCreate(ctx, customerID)
 
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+		log.Printf("Error creating item transactions for customer ID %s: %v\n", customerID, err)
+		// return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to create item transactions", "")
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, err.Error(), "")
 	}
 
-	// history, err := sc.salesUseCase.ToHistory(ctx, input.ToDomain(), historyID)
-	_, err = sc.authUseCase.ItemTransactionsCreate(ctx, input.ToItemTransactionsDomain(), historyID)
-
-	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Missing item transactions data", "")
-	}
-
-	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", _resHistory.FromDomain(history))
-	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", " ")
-	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "Success item transactions Data")
-
+	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "successfully created item transactions")
 }
+
+// func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
+// 	historyID := c.Param("customer_id")
+// 	input := request.ItemTransactions{}
+// 	ctx := c.Request().Context()
+
+// 	if err := c.Bind(&input); err != nil {
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	}
+
+// 	err := input.Validate()
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	}
+
+// 	// history, err := sc.salesUseCase.ToHistory(ctx, input.ToDomain(), historyID)
+// 	_, err = sc.authUseCase.ItemTransactionsCreate(ctx, input.ToItemTransactionsDomain(), historyID)
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Missing item transactions data", "")
+// 	}
+
+// 	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", _resHistory.FromDomain(history))
+// 	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", " ")
+// 	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "Success item transactions Data")
+
+// }
 
 func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
 	ctx := c.Request().Context()

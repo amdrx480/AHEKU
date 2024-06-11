@@ -79,21 +79,19 @@ type Purchases struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 	//Preload Memuat data Dari isi Nama Tabel Struck
-	Vendors  Vendors `json:"-" gorm:"foreignKey:VendorID"`
-	VendorID uint    `json:"vendor_id"`
-	// VendorName string     `json:"Vendor_name"`
+	Vendors    Vendors    `json:"-" gorm:"foreignKey:VendorID"`
+	VendorID   uint       `json:"vendor_id"`
 	StockName  string     `json:"stock_name"`
 	StockCode  string     `json:"stock_code"`
 	Categories Categories `json:"-" gorm:"foreignKey:CategoryID"`
 	CategoryID uint       `json:"category_id"`
-	// CategoryName   string     `json:"category_name"`
-	Units  Units `gorm:"foreignKey:UnitID"`
-	UnitID uint  `json:"unit_id"`
-	// UnitName       string `json:"unit_name"`
-	Description    string `json:"description"`
-	Quantity       int    `json:"quantity"`
-	PurchasesPrice int    `json:"purchases_price"`
-	SellingPrice   int    `json:"selling_price"`
+	Units      Units      `gorm:"foreignKey:UnitID"`
+	UnitID     uint       `json:"unit_id"`
+	// UnitName      string     `json:"unit_name"`
+	Description   string `json:"description"`
+	Quantity      int    `json:"quantity"`
+	PurchasePrice int    `json:"purchase_price"`
+	SellingPrice  int    `json:"selling_price"`
 }
 
 type CartItems struct {
@@ -105,8 +103,10 @@ type CartItems struct {
 	CustomerID uint           `json:"customer_id"`
 	Stocks     Stocks         `json:"-" gorm:"foreignKey:stock_id"`
 	StockID    uint           `json:"stock_id"`
-	// Categories Categories     `json:"-" gorm:"foreignKey:category_id"`
-	// CategoryID uint           `json:"category_id"`
+	// Stocks berisi Units yang nantinya akan menampilkan data units menggunakan eager loading (`Preload``)
+	// Units      Units          `gorm:"foreignKey:unit_id"`
+	//akan terjadi constraint foreginKey dari unit_id
+	// UnitID    uint           `json:"unit_id"`
 	Quantity int `json:"quantity"`
 	Price    int `json:"price"`
 	SubTotal int `json:"sub_total"`
@@ -117,9 +117,15 @@ type ItemTransactions struct {
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+	Customers  Customers      `gorm:"foreignKey:customer_id"` // Menentukan foreign key
 	CustomerID uint           `json:"customer_id"`
+	Stocks     Stocks         `json:"-" gorm:"foreignKey:stock_id"`
 	StockID    uint           `json:"stock_id"`
+	UnitID     uint           `json:"unit_id"`
+	Categories Categories     `json:"-" gorm:"foreignKey:CategoryID"`
+	CategoryID uint           `json:"category_id"`
 	Quantity   int            `json:"quantity"`
+	Price      int            `json:"price"`
 	SubTotal   int            `json:"sub_total"`
 }
 
@@ -282,22 +288,22 @@ func FromStocksDomain(domain *admin.StocksDomain) *Stocks {
 
 func (record *Purchases) ToPurchasesDomain() admin.PurchasesDomain {
 	return admin.PurchasesDomain{
-		ID:        record.ID,
-		CreatedAt: record.CreatedAt,
-		UpdatedAt: record.UpdatedAt,
-		DeletedAt: record.DeletedAt,
-		VendorID:  record.VendorID,
-		// VendorName:     record.Vendors.VendorName,
-		StockName:  record.StockName,
-		StockCode:  record.StockCode,
-		CategoryID: record.CategoryID,
-		// CategoryName:   record.Categories.CategoryName,
-		UnitID: record.UnitID,
-		// UnitName:       record.Units.UnitName,
-		Description:    record.Description,
-		Quantity:       record.Quantity,
-		PurchasesPrice: record.PurchasesPrice,
-		SellingPrice:   record.SellingPrice,
+		ID:            record.ID,
+		CreatedAt:     record.CreatedAt,
+		UpdatedAt:     record.UpdatedAt,
+		DeletedAt:     record.DeletedAt,
+		VendorID:      record.VendorID,
+		VendorName:    record.Vendors.VendorName,
+		StockName:     record.StockName,
+		StockCode:     record.StockCode,
+		CategoryID:    record.CategoryID,
+		CategoryName:  record.Categories.CategoryName,
+		UnitID:        record.UnitID,
+		UnitName:      record.Units.UnitName,
+		Description:   record.Description,
+		Quantity:      record.Quantity,
+		PurchasePrice: record.PurchasePrice,
+		SellingPrice:  record.SellingPrice,
 	}
 }
 func FromPurchasesDomain(domain *admin.PurchasesDomain) *Purchases {
@@ -314,10 +320,10 @@ func FromPurchasesDomain(domain *admin.PurchasesDomain) *Purchases {
 		// CategoryName:   domain.CategoryName,
 		UnitID: domain.UnitID,
 		// UnitName:       domain.UnitName,
-		Description:    domain.Description,
-		Quantity:       domain.Quantity,
-		PurchasesPrice: domain.PurchasesPrice,
-		SellingPrice:   domain.SellingPrice,
+		Description:   domain.Description,
+		Quantity:      domain.Quantity,
+		PurchasePrice: domain.PurchasePrice,
+		SellingPrice:  domain.SellingPrice,
 	}
 }
 
@@ -331,11 +337,14 @@ func (record *CartItems) ToCartItemsDomain() admin.CartItemsDomain {
 		CustomerName: record.Customers.CustomerName,
 		StockID:      record.StockID,
 		StockName:    record.Stocks.StockName,
-		// CategoryName: record.Categories.CategoryName,
+		// Stocks berisi Units yang nantinya akan menampilkan data units menggunakan eager loading (`Preload``)
+		// ambil id units dari stocks yang berisi one to one dari untis
+		UnitID: record.Stocks.UnitID,
+		// ambil UnitName units dari stocks yang berisi one to one dari untis
+		UnitName: record.Stocks.Units.UnitName,
 		Quantity: record.Quantity,
 		Price:    record.Price,
 		SubTotal: record.SubTotal,
-		// CartID:    record.CartID,
 	}
 }
 func FromCartItemsDomain(domain *admin.CartItemsDomain) *CartItems {
@@ -345,36 +354,51 @@ func FromCartItemsDomain(domain *admin.CartItemsDomain) *CartItems {
 		UpdatedAt:  domain.UpdatedAt,
 		DeletedAt:  domain.DeletedAt,
 		CustomerID: domain.CustomerID,
-		// CustomerName: domain.CustomerName,
-		// CartID:    domain.CartID,
-		StockID: domain.StockID,
-		// StockName: domain.StockName,
+		StockID:    domain.StockID,
+
+		// UnitsID: domain.UnitsID,
+
 		Quantity: domain.Quantity,
 		Price:    domain.Price,
 		SubTotal: domain.SubTotal,
+
+		// StockName: domain.StockName,
+		// CustomerName: domain.CustomerName,
+		// CartID:    domain.CartID,
 	}
 }
 
 func (record *ItemTransactions) ToItemTransactionsDomain() admin.ItemTransactionsDomain {
 	return admin.ItemTransactionsDomain{
-		ID:         record.ID,
-		CreatedAt:  record.CreatedAt,
-		DeletedAt:  record.DeletedAt,
-		CustomerID: record.CustomerID,
-		StockID:    record.StockID,
-		Quantity:   record.Quantity,
-		SubTotal:   record.SubTotal,
+		ID:           record.ID,
+		CreatedAt:    record.CreatedAt,
+		DeletedAt:    record.DeletedAt,
+		CustomerID:   record.CustomerID,
+		CustomerName: record.Customers.CustomerName,
+		StockID:      record.StockID,
+		StockName:    record.Stocks.StockName,
+		UnitID:       record.Stocks.UnitID,
+		UnitName:     record.Stocks.Units.UnitName,
+		CategoryID:   record.Stocks.CategoryID,
+		CategoryName: record.Stocks.Categories.CategoryName,
+		Quantity:     record.Quantity,
+		Price:        record.Price,
+		SubTotal:     record.SubTotal,
 	}
 }
 
 func FromItemTransactionsDomain(domain *admin.ItemTransactionsDomain) *ItemTransactions {
 	return &ItemTransactions{
-		ID:        domain.ID,
-		CreatedAt: domain.CreatedAt,
-		DeletedAt: domain.DeletedAt,
-		StockID:   domain.StockID,
-		Quantity:  domain.Quantity,
-		SubTotal:  domain.SubTotal,
+		ID:         domain.ID,
+		CreatedAt:  domain.CreatedAt,
+		DeletedAt:  domain.DeletedAt,
+		CustomerID: domain.CustomerID,
+		StockID:    domain.StockID,
+		UnitID:     domain.UnitID,
+		CategoryID: domain.CategoryID,
+		Quantity:   domain.Quantity,
+		Price:      domain.Price,
+		SubTotal:   domain.SubTotal,
 	}
 }
 

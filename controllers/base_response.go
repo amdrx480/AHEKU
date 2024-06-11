@@ -5,15 +5,20 @@ import (
 	// "backend-golang/controllers/users/response"
 )
 
-// type LoginResult struct {
-// 	// Name  string `json:"name"`
-// 	Token string `json:"token"`
-// }
+type LoginVoucherResult struct {
+	Token string `json:"token"`
+}
+
+type LoginVoucherResponse struct {
+	Error              bool               `json:"error"`
+	Message            string             `json:"message"`
+	LoginVoucherResult LoginVoucherResult `json:"login_result"`
+}
 
 type Response[T any] struct {
 	Error   bool   `json:"error"`
 	Message string `json:"message"`
-	Data    T      `json:"token"`
+	Data    T      `json:"data"`
 }
 
 type ResponseWithoutData struct {
@@ -21,11 +26,15 @@ type ResponseWithoutData struct {
 	Message string `json:"message"`
 }
 
-// type ResponseLogin struct {
-// 	Error       bool        `json:"error"`
-// 	Message     string      `json:"message"`
-// 	LoginResult LoginResult `json:"loginResult"`
-// }
+func NewResponseLoginVoucher(c echo.Context, statusCode int, statusMessage bool, message string, loginVoucherResult string) error {
+	return c.JSON(statusCode, LoginVoucherResponse{
+		Error:   statusMessage,
+		Message: message,
+		LoginVoucherResult: LoginVoucherResult{
+			Token: loginVoucherResult,
+		},
+	})
+}
 
 func NewResponse[T any](c echo.Context, statusCode int, statusError bool, message string, data T) error {
 	return c.JSON(statusCode, Response[T]{
@@ -39,16 +48,5 @@ func NewResponseWithoutData(c echo.Context, statusCode int, statusError bool, me
 	return c.JSON(statusCode, ResponseWithoutData{
 		Error:   statusError,
 		Message: message,
-		// Data:    data,
 	})
 }
-
-// func NewResponseLogin(c echo.Context, statusCode int, statusMessage bool, message string, loginResult string) error {
-// 	return c.JSON(statusCode, ResponseLogin{
-// 		Error:   statusMessage,
-// 		Message: message,
-// 		LoginResult: LoginResult{
-// 			Token: loginResult,
-// 		},
-// 	})
-// }

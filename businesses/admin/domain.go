@@ -78,23 +78,22 @@ type StocksDomain struct {
 }
 
 type PurchasesDomain struct {
-	ID             uint
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	DeletedAt      gorm.DeletedAt
-	VendorID       uint
-	StockName      string
-	StockCode      string
-	CategoryID     uint
-	UnitID         uint
-	Quantity       int
-	Description    string
-	PurchasesPrice int
-	SellingPrice   int
-	// VendorName     string
-	// CategoryName   string
-	// UnitName       string
-
+	ID            uint
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt
+	VendorID      uint
+	VendorName    string
+	StockName     string
+	StockCode     string
+	CategoryID    uint
+	CategoryName  string
+	UnitID        uint
+	UnitName      string
+	Quantity      int
+	Description   string
+	PurchasePrice int
+	SellingPrice  int
 }
 
 // Many CartItems To One Customer
@@ -107,8 +106,8 @@ type CartItemsDomain struct {
 	CustomerName string
 	StockID      uint
 	StockName    string
-	// CategoryID   uint
-	// CategoryName string
+	UnitID       uint
+	UnitName     string
 	Quantity     int
 	SellingPrice int
 	Price        int
@@ -116,14 +115,21 @@ type CartItemsDomain struct {
 }
 
 type ItemTransactionsDomain struct {
-	ID         uint
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  gorm.DeletedAt
-	CustomerID uint
-	StockID    uint
-	Quantity   int
-	SubTotal   int
+	ID           uint
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt
+	CustomerID   uint
+	CustomerName string
+	StockID      uint
+	StockName    string
+	UnitID       uint
+	UnitName     string
+	CategoryID   uint
+	CategoryName string
+	Quantity     int
+	Price        int
+	SubTotal     int
 }
 
 // One Carts To Many CartItems
@@ -179,11 +185,13 @@ type Usecase interface {
 	CartItemsCreate(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error)
 	CartItemsGetByID(ctx context.Context, id string) (CartItemsDomain, error)
 	// CartItemsGetByCustomerID(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error)
-	CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error)
+	// CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error)
+	CartItemsGetAllByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error)
 	CartItemsGetAll(ctx context.Context) ([]CartItemsDomain, error)
 	CartItemsDelete(ctx context.Context, id string) error
 
-	ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
+	// ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
+	ItemTransactionsCreate(ctx context.Context, customerId string) (ItemTransactionsDomain, error)
 	ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error)
 
 	// Carts
@@ -234,11 +242,12 @@ type Repository interface {
 	CartItemsCreate(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error)
 	CartItemsGetByID(ctx context.Context, id string) (CartItemsDomain, error)
 	// CartItemsGetByCustomerID(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error)
-	CartItemsGetByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error)
+	CartItemsGetAllByCustomerID(ctx context.Context, customerId string) ([]CartItemsDomain, error)
 	CartItemsGetAll(ctx context.Context) ([]CartItemsDomain, error)
 	CartItemsDelete(ctx context.Context, id string) error
 
-	ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
+	// ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
+	ItemTransactionsCreate(ctx context.Context, customerId string) (ItemTransactionsDomain, error)
 	ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error)
 
 	// Carts

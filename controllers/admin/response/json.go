@@ -53,7 +53,7 @@ type Units struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
-	UnitName  string         `json:"units_name"`
+	UnitName  string         `json:"unit_name"`
 }
 
 type Stocks struct {
@@ -65,8 +65,8 @@ type Stocks struct {
 	StockCode    string         `json:"stock_code"`
 	CategoryName string         `json:"category_name"`
 	CategoryID   uint           `json:"category_id"`
-	UnitID       uint           `json:"units_id"`
-	UnitName     string         `json:"units_name"`
+	UnitID       uint           `json:"unit_id"`
+	UnitName     string         `json:"unit_name"`
 	Description  string         `json:"description"`
 	StockTotal   int            `json:"stock_total"`
 	SellingPrice int            `json:"selling_price"`
@@ -78,10 +78,13 @@ type Purchases struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `json:"deleted_at"`
 	VendorID       uint           `json:"vendor_id"`
+	VendorName     string         `json:"vendor_name"`
 	StockName      string         `json:"stock_name"`
 	StockCode      string         `json:"stock_code"`
 	CategoryID     uint           `json:"category_id"`
-	UnitID         uint           `json:"units_id"`
+	CategoryName   string         `json:"category_name"`
+	UnitID         uint           `json:"unit_id"`
+	UnitName       string         `json:"unit_name"`
 	Quantity       int            `json:"quantity"`
 	Description    string         `json:"description"`
 	Purchase_Price int            `json:"purchase_price"`
@@ -89,31 +92,37 @@ type Purchases struct {
 }
 
 type CartItems struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at"`
-	// CartID        uint           `json:"cart_id"`
-	CustomerID   uint   `json:"customer_id"`
-	CustomerName string `json:"customer_name"`
-	StockID      uint   `json:"stock_id"`
-	StockName    string `json:"stock_name"`
-	// CategoryID    uint   `json:"category_id"`
-	// CategoryName  string `json:"category_name"`
-	Quantity      int `json:"quantity"`
-	Selling_Price int `json:"selling_price"`
-	Price         int `json:"price"`
-	SubTotal      int `json:"sub_total"`
+	ID            uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `json:"deleted_at"`
+	CustomerID    uint           `json:"customer_id"`
+	CustomerName  string         `json:"customer_name"`
+	StockID       uint           `json:"stock_id"`
+	StockName     string         `json:"stock_name"`
+	UnitID        uint           `json:"unit_id"`
+	UnitName      string         `json:"unit_name"`
+	Quantity      int            `json:"quantity"`
+	Selling_Price int            `json:"selling_price"`
+	Price         int            `json:"price"`
+	SubTotal      int            `json:"sub_total"`
 }
 
 type ItemTransactions struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	StockID   uint           `json:"stock_id"`
-	Quantity  int            `json:"quantity"`
-	SubTotal  int            `json:"sub_total"`
+	ID           uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+	CustomerID   uint           `json:"customer_id"`
+	CustomerName string         `json:"customer_name"`
+	StockID      uint           `json:"stock_id"`
+	StockName    string         `json:"stock_name"`
+	UnitID       uint           `json:"unit_id"`
+	UnitName     string         `json:"unit_name"`
+	CategoryID   uint           `json:"category_id"`
+	CategoryName string         `json:"category_name"`
+	Quantity     int            `json:"quantity"`
+	SubTotal     int            `json:"sub_total"`
 }
 
 func FromAdminsDomain(domain admin.AdminsDomain) Admin {
@@ -199,21 +208,21 @@ func FromStocksDomain(domain admin.StocksDomain) Stocks {
 
 func FromPurchasesDomain(domain admin.PurchasesDomain) Purchases {
 	return Purchases{
-		ID:        domain.ID,
-		CreatedAt: domain.CreatedAt,
-		UpdatedAt: domain.UpdatedAt,
-		DeletedAt: domain.DeletedAt,
-		VendorID:  domain.VendorID,
-		// VendorName:     domain.VendorName,
-		StockName:  domain.StockName,
-		StockCode:  domain.StockCode,
-		CategoryID: domain.CategoryID,
-		// CategoryName:   domain.CategoryName,
-		UnitID: domain.UnitID,
-		// UnitName:       domain.UnitName,
+		ID:             domain.ID,
+		CreatedAt:      domain.CreatedAt,
+		UpdatedAt:      domain.UpdatedAt,
+		DeletedAt:      domain.DeletedAt,
+		VendorID:       domain.VendorID,
+		VendorName:     domain.VendorName,
+		StockName:      domain.StockName,
+		StockCode:      domain.StockCode,
+		CategoryID:     domain.CategoryID,
+		CategoryName:   domain.CategoryName,
+		UnitID:         domain.UnitID,
+		UnitName:       domain.UnitName,
 		Quantity:       domain.Quantity,
 		Description:    domain.Description,
-		Purchase_Price: domain.PurchasesPrice,
+		Purchase_Price: domain.PurchasePrice,
 		SellingPrice:   domain.SellingPrice,
 	}
 }
@@ -228,21 +237,28 @@ func FromCartItemsDomain(domain admin.CartItemsDomain) CartItems {
 		CustomerName: domain.CustomerName,
 		StockID:      domain.StockID,
 		StockName:    domain.StockName,
-		// CategoryID:   domain.CategoryID,
-		// CategoryName: domain.CategoryName,
-		Quantity: domain.Quantity,
-		Price:    domain.Price,
-		SubTotal: domain.SubTotal,
+		UnitID:       domain.UnitID,
+		UnitName:     domain.UnitName,
+		Quantity:     domain.Quantity,
+		Price:        domain.Price,
+		SubTotal:     domain.SubTotal,
 	}
 }
 
 func FromItemTransactionsDomain(domain admin.ItemTransactionsDomain) ItemTransactions {
 	return ItemTransactions{
-		ID:        domain.ID,
-		CreatedAt: domain.CreatedAt,
-		DeletedAt: domain.DeletedAt,
-		StockID:   domain.StockID,
-		Quantity:  domain.Quantity,
-		SubTotal:  domain.SubTotal,
+		ID:           domain.ID,
+		CreatedAt:    domain.CreatedAt,
+		DeletedAt:    domain.DeletedAt,
+		CustomerID:   domain.CustomerID,
+		CustomerName: domain.CustomerName,
+		StockID:      domain.StockID,
+		StockName:    domain.StockName,
+		UnitID:       domain.UnitID,
+		UnitName:     domain.UnitName,
+		CategoryID:   domain.CategoryID,
+		CategoryName: domain.CategoryName,
+		Quantity:     domain.Quantity,
+		SubTotal:     domain.SubTotal,
 	}
 }

@@ -41,7 +41,7 @@ type Vendors struct {
 }
 
 type Units struct {
-	UnitName string `json:"units_name" validate:"required"`
+	UnitName string `json:"unit_name" validate:"required"`
 }
 
 type Stocks struct {
@@ -49,8 +49,8 @@ type Stocks struct {
 	StockCode    string `json:"stock_code" form:"stock_code"`
 	CategoryName string `json:"category_name" form:"category_name"`
 	CategoryID   uint   `json:"category_id" form:"category_id"`
-	UnitID       uint   `json:"units_id" form:"units_id"`
-	UnitName     string `json:"units_name" form:"units_name"`
+	UnitID       uint   `json:"unit_id" form:"unit_id"`
+	UnitName     string `json:"unit_name" form:"unit_name"`
 	Description  string `json:"description" form:"description"`
 	ImagePath    string `json:"image_path" form:"image_path"`
 	StockTotal   int    `json:"stock_total" form:"stock_total"`
@@ -58,129 +58,130 @@ type Stocks struct {
 }
 
 type Purchases struct {
-	VendorID       uint   `json:"vendor_id"`
-	StockName      string `json:"stock_name"`
-	StockCode      string `json:"stock_code"`
-	CategoryID     uint   `json:"category_id"`
-	UnitID         uint   `json:"units_id"`
-	Quantity       int    `json:"quantity"`
-	Description    string `json:"description"`
-	PurchasesPrice int    `json:"purchase_price"`
-	SellingPrice   int    `json:"selling_price"`
+	VendorID      uint   `json:"vendor_id"`
+	StockName     string `json:"stock_name"`
+	StockCode     string `json:"stock_code"`
+	CategoryID    uint   `json:"category_id"`
+	UnitID        uint   `json:"unit_id"`
+	Quantity      int    `json:"quantity"`
+	Description   string `json:"description"`
+	PurchasePrice int    `json:"purchase_price"`
+	SellingPrice  int    `json:"selling_price"`
 }
 
 type CartItems struct {
 	CustomerID uint `json:"customer_id" validate:"required"`
 	StockID    uint `json:"stock_id" validate:"required"`
-	Quantity   int  `json:"quantity" validate:"required"`
+	// UnitsID    uint `json:"unit_id"`
+	Quantity int `json:"quantity" validate:"required"`
 }
 
-type ItemTransactions struct {
-	StockID  uint `json:"stock_id" `
-	Quantity int  `json:"quantity" `
-	SubTotal int  `json:"sub_total" `
-}
+// type ItemTransactions struct {
+// 	CustomerID uint `json:"customer_id" validate:"required"`
+// }
 
-func (req *AdminRegistration) ToAdminRegistrationDomain() *admin.AdminsDomain {
+func (request *AdminRegistration) ToAdminRegistrationDomain() *admin.AdminsDomain {
 	return &admin.AdminsDomain{
-		Name:     req.Name,
-		Voucher:  req.Voucher,
-		Password: req.Password,
+		Name:     request.Name,
+		Voucher:  request.Voucher,
+		Password: request.Password,
 	}
 }
 
-func (req *AdminLogin) ToAdminLoginDomain() *admin.AdminsDomain {
+func (request *AdminLogin) ToAdminLoginDomain() *admin.AdminsDomain {
 	return &admin.AdminsDomain{
-		Name:     req.Name,
-		Password: req.Password,
+		Name:     request.Name,
+		Password: request.Password,
 	}
 }
 
-func (req *AdminVoucher) ToAdminVoucherDomain() *admin.AdminsDomain {
+func (request *AdminVoucher) ToAdminVoucherDomain() *admin.AdminsDomain {
 	return &admin.AdminsDomain{
-		Voucher: req.Voucher,
+		Voucher: request.Voucher,
 	}
 }
 
-func (req *Customers) ToCustomersDomain() *admin.CustomersDomain {
+func (request *Customers) ToCustomersDomain() *admin.CustomersDomain {
 	return &admin.CustomersDomain{
-		CustomerName:    req.CustomerName,
-		CustomerAddress: req.CustomerAddress,
-		CustomerEmail:   req.CustomerEmail,
-		CustomerPhone:   req.CustomerPhone,
+		CustomerName:    request.CustomerName,
+		CustomerAddress: request.CustomerAddress,
+		CustomerEmail:   request.CustomerEmail,
+		CustomerPhone:   request.CustomerPhone,
 	}
 }
 
-func (req *Category) ToCategoriesDomain() *admin.CategoriesDomain {
+func (request *Category) ToCategoriesDomain() *admin.CategoriesDomain {
 	return &admin.CategoriesDomain{
-		CategoryName: req.CategoryName,
+		CategoryName: request.CategoryName,
 	}
 }
 
-func (req *Vendors) ToVendorsDomain() *admin.VendorsDomain {
+func (request *Vendors) ToVendorsDomain() *admin.VendorsDomain {
 	return &admin.VendorsDomain{
-		VendorName:    req.VendorName,
-		VendorAddress: req.VendorAddress,
-		VendorEmail:   req.VendorEmail,
-		VendorPhone:   req.VendorPhone,
+		VendorName:    request.VendorName,
+		VendorAddress: request.VendorAddress,
+		VendorEmail:   request.VendorEmail,
+		VendorPhone:   request.VendorPhone,
 	}
 }
 
-func (req *Units) ToUnitsDomain() *admin.UnitsDomain {
+func (request *Units) ToUnitsDomain() *admin.UnitsDomain {
 	return &admin.UnitsDomain{
-		UnitName: req.UnitName,
+		UnitName: request.UnitName,
 	}
 }
 
-func (req *Stocks) ToStocksDomain() *admin.StocksDomain {
+func (request *Stocks) ToStocksDomain() *admin.StocksDomain {
 	return &admin.StocksDomain{
-		StockName:    req.StockName,
-		StockCode:    req.StockCode,
-		CategoryID:   req.CategoryID,
-		CategoryName: req.CategoryName,
-		UnitID:       req.UnitID,
-		Description:  req.Description,
-		ImagePath:    req.ImagePath,
-		StockTotal:   req.StockTotal,
-		SellingPrice: req.SellingPrice,
+		StockName:    request.StockName,
+		StockCode:    request.StockCode,
+		CategoryID:   request.CategoryID,
+		CategoryName: request.CategoryName,
+		UnitID:       request.UnitID,
+		Description:  request.Description,
+		ImagePath:    request.ImagePath,
+		StockTotal:   request.StockTotal,
+		SellingPrice: request.SellingPrice,
 	}
 }
 
-func (req *Purchases) ToPurchasesDomain() *admin.PurchasesDomain {
+func (request *Purchases) ToPurchasesDomain() *admin.PurchasesDomain {
 	return &admin.PurchasesDomain{
-		VendorID:       req.VendorID,
-		StockName:      req.StockName,
-		StockCode:      req.StockCode,
-		CategoryID:     req.CategoryID,
-		UnitID:         req.UnitID,
-		Quantity:       req.Quantity,
-		Description:    req.Description,
-		PurchasesPrice: req.PurchasesPrice,
-		SellingPrice:   req.SellingPrice,
+		VendorID:      request.VendorID,
+		StockName:     request.StockName,
+		StockCode:     request.StockCode,
+		CategoryID:    request.CategoryID,
+		UnitID:        request.UnitID,
+		Quantity:      request.Quantity,
+		Description:   request.Description,
+		PurchasePrice: request.PurchasePrice,
+		SellingPrice:  request.SellingPrice,
 	}
 }
 
-func (req *CartItems) ToCartItemsDomain() *admin.CartItemsDomain {
+func (request *CartItems) ToCartItemsDomain() *admin.CartItemsDomain {
 	return &admin.CartItemsDomain{
-		CustomerID: req.CustomerID,
-		StockID:    req.StockID,
-		Quantity:   req.Quantity,
+		CustomerID: request.CustomerID,
+		StockID:    request.StockID,
+		// UnitsID:    request.UnitsID,
+		Quantity: request.Quantity,
 	}
 }
 
-func (req *ItemTransactions) ToItemTransactionsDomain() *admin.ItemTransactionsDomain {
-	return &admin.ItemTransactionsDomain{
-		StockID:  req.StockID,
-		Quantity: req.Quantity,
-		SubTotal: req.SubTotal,
-	}
-}
+// func (request *ItemTransactions) ToItemTransactionsDomain() *admin.ItemTransactionsDomain {
+// 	return &admin.ItemTransactionsDomain{
+// 		CustomerID: request.CustomerID,
+// 		// StockID:  request.StockID,
+// 		// Quantity: request.Quantity,
+// 		// SubTotal: request.SubTotal,
+// 	}
+// }
 
-func validateRequest(req interface{}) error {
+func validateRequest(request interface{}) error {
 	validate := validator.New()
 	validate.RegisterValidation("NotEmpty", NotEmpty)
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
@@ -192,82 +193,82 @@ func NotEmpty(fl validator.FieldLevel) bool {
 	return inputData != ""
 }
 
-func (req *AdminRegistration) Validate() error {
-	return validateRequest(req)
+func (request *AdminRegistration) Validate() error {
+	return validateRequest(request)
 }
 
-func (req *AdminLogin) Validate() error {
-	return validateRequest(req)
+func (request *AdminLogin) Validate() error {
+	return validateRequest(request)
 }
 
-func (req *AdminVoucher) Validate() error {
+func (request *AdminVoucher) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *Customers) Validate() error {
+func (request *Customers) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *Category) Validate() error {
+func (request *Category) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *Vendors) Validate() error {
+func (request *Vendors) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *Units) Validate() error {
+func (request *Units) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *Stocks) Validate() error {
+func (request *Stocks) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *Purchases) Validate() error {
+func (request *Purchases) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *CartItems) Validate() error {
+func (request *CartItems) Validate() error {
 	validate := validator.New()
 
-	err := validate.Struct(req)
+	err := validate.Struct(request)
 
 	return err
 }
 
-func (req *ItemTransactions) Validate() error {
-	validate := validator.New()
+// func (request *ItemTransactions) Validate() error {
+// 	validate := validator.New()
 
-	err := validate.Struct(req)
+// 	err := validate.Struct(request)
 
-	return err
-}
+// 	return err
+// }

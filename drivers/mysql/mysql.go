@@ -214,10 +214,10 @@ func SeedPurchasesData(db *gorm.DB) error {
 			// CategoryName:   "Kabel",
 			UnitID: 1, // Pastikan unit ini ada di tabel units
 			// UnitName:      "Pcs",
-			Description:    "Lorem ipsum dolor sit amet.",
-			Quantity:       50,   // Jumlah yang dibeli
-			PurchasesPrice: 500,  // Harga beli
-			SellingPrice:   1000, // Harga jual
+			Description:   "Lorem ipsum dolor sit amet.",
+			Quantity:      50,   // Jumlah yang dibeli
+			PurchasePrice: 500,  // Harga beli
+			SellingPrice:  1000, // Harga jual
 		},
 		{
 			VendorID:   2, // Pastikan vendor ini ada di tabel vendors
@@ -229,9 +229,9 @@ func SeedPurchasesData(db *gorm.DB) error {
 			// UnitName:   "Pack",
 			Description: "Lorem ipsum dolor sit amet.",
 
-			Quantity:       75,   // Jumlah yang dibeli
-			PurchasesPrice: 750,  // Harga beli
-			SellingPrice:   2000, // Harga jual
+			Quantity:      75,   // Jumlah yang dibeli
+			PurchasePrice: 750,  // Harga beli
+			SellingPrice:  2000, // Harga jual
 		},
 		{
 			VendorID:   3, // Pastikan vendor ini ada di tabel vendors
@@ -243,9 +243,9 @@ func SeedPurchasesData(db *gorm.DB) error {
 			// UnitName:   "Roll",
 			Description: "Lorem ipsum dolor sit amet.",
 
-			Quantity:       60,   // Jumlah yang dibeli
-			PurchasesPrice: 600,  // Harga beli
-			SellingPrice:   1500, // Harga jual
+			Quantity:      60,   // Jumlah yang dibeli
+			PurchasePrice: 600,  // Harga beli
+			SellingPrice:  1500, // Harga jual
 		},
 		{
 			VendorID:   1, // Pastikan vendor ini ada di tabel vendors
@@ -257,9 +257,9 @@ func SeedPurchasesData(db *gorm.DB) error {
 			// UnitName:   "Meter",
 			Description: "Lorem ipsum dolor sit amet.",
 
-			Quantity:       80,   // Jumlah yang dibeli
-			PurchasesPrice: 800,  // Harga beli
-			SellingPrice:   3000, // Harga jual
+			Quantity:      80,   // Jumlah yang dibeli
+			PurchasePrice: 800,  // Harga beli
+			SellingPrice:  3000, // Harga jual
 		},
 		{
 			VendorID:   2, // Pastikan vendor ini ada di tabel vendors
@@ -271,9 +271,9 @@ func SeedPurchasesData(db *gorm.DB) error {
 			// UnitName:   "Pcs",
 			Description: "Lorem ipsum dolor sit amet.",
 
-			Quantity:       70,   // Jumlah yang dibeli
-			PurchasesPrice: 700,  // Harga beli
-			SellingPrice:   2500, // Harga jual
+			Quantity:      70,   // Jumlah yang dibeli
+			PurchasePrice: 700,  // Harga beli
+			SellingPrice:  2500, // Harga jual
 		},
 	}
 
@@ -324,44 +324,50 @@ func SeedCartItemsData(db *gorm.DB) error {
 		{
 			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
 			StockID:    1,
-			Quantity:   1,
-			Price:      1000,
-			SubTotal:   21000,
+			//UnitsID:    1,
+			Quantity: 1,
+			Price:    1000,
+			SubTotal: 21000,
 		},
 		{
 			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
 			StockID:    1,
-			Quantity:   2,
-			Price:      2000,
-			SubTotal:   21000,
+			//UnitsID:    1,
+			Quantity: 2,
+			Price:    2000,
+			SubTotal: 21000,
 		},
 		{
 			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
 			StockID:    1,
-			Quantity:   3,
-			Price:      3000,
-			SubTotal:   21000,
+			//UnitsID:    1,
+			Quantity: 3,
+			Price:    3000,
+			SubTotal: 21000,
 		},
 		{
 			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
 			StockID:    1,
-			Quantity:   4,
-			Price:      4000,
-			SubTotal:   21000,
+			//UnitsID:    1,
+			Quantity: 4,
+			Price:    4000,
+			SubTotal: 21000,
 		},
 		{
 			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
 			StockID:    1,
-			Quantity:   5,
-			Price:      5000,
-			SubTotal:   21000,
+			//UnitsID:    1,
+			Quantity: 5,
+			Price:    5000,
+			SubTotal: 21000,
 		},
 		{
 			CustomerID: 1, // Pastikan vendor ini ada di tabel vendors
 			StockID:    1,
-			Quantity:   6,
-			Price:      6000,
-			SubTotal:   21000,
+			//UnitsID:    1,
+			Quantity: 6,
+			Price:    6000,
+			SubTotal: 21000,
 		},
 
 		//
@@ -369,46 +375,52 @@ func SeedCartItemsData(db *gorm.DB) error {
 		{
 			CustomerID: 2,
 			StockID:    2,
-			Quantity:   1,
-			Price:      2000,
-			SubTotal:   42000,
+			//UnitsID:    2,
+			Quantity: 1,
+			Price:    2000,
+			SubTotal: 42000,
 		},
 
 		{
 			CustomerID: 2,
 			StockID:    2,
-			Quantity:   2,
-			Price:      4000,
-			SubTotal:   42000,
+			//UnitsID:    2,
+			Quantity: 2,
+			Price:    4000,
+			SubTotal: 42000,
 		},
 
 		{
 			CustomerID: 2,
 			StockID:    2,
-			Quantity:   3,
-			Price:      6000,
-			SubTotal:   42000,
+			//UnitsID:    2,
+			Quantity: 3,
+			Price:    6000,
+			SubTotal: 42000,
 		},
 		{
 			CustomerID: 2,
 			StockID:    2,
-			Quantity:   4,
-			Price:      8000,
-			SubTotal:   42000,
+			//UnitsID:    2,
+			Quantity: 4,
+			Price:    8000,
+			SubTotal: 42000,
 		},
 		{
 			CustomerID: 2,
 			StockID:    2,
-			Quantity:   5,
-			Price:      10000,
-			SubTotal:   42000,
+			//UnitsID:    2,
+			Quantity: 5,
+			Price:    10000,
+			SubTotal: 42000,
 		},
 		{
 			CustomerID: 2,
 			StockID:    2,
-			Quantity:   6,
-			Price:      12000,
-			SubTotal:   42000,
+			//UnitsID:    2,
+			Quantity: 6,
+			Price:    12000,
+			SubTotal: 42000,
 		},
 	}
 
