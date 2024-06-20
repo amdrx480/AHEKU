@@ -39,25 +39,23 @@ func main() {
 
 	db := configDB.InitDB()
 
-	// _dbDriver.ModifyTableCollation(db)
-
+	// harus sesuai urutan karena dimulai dari atas
+	_dbDriver.SeedRolesData(db)
 	_dbDriver.SeedAdminData(db)
 	_dbDriver.SeedCustomersData(db)
-
 	_dbDriver.SeedCategoryData(db)
 	_dbDriver.SeedVendorsData(db)
 	_dbDriver.SeedUnitsData(db)
-
 	_dbDriver.SeedPurchasesData(db)
 	_dbDriver.SeedCartItemsData(db)
 
 	// _dbDriver.SeedStocksData(db)
-
+	// _dbDriver.ModifyTableCollation(db)
 	_dbDriver.MigrateDB(db)
 
 	configJWT := _middleware.JWTConfig{
 		SecretKey:       utils.GetConfig("JWT_SECRET_KEY"),
-		ExpiresDuration: 1,
+		ExpiresDuration: 60,
 	}
 
 	configLogger := _middleware.LoggerConfig{

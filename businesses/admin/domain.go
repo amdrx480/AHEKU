@@ -7,15 +7,28 @@ import (
 	"gorm.io/gorm"
 )
 
-// Admins
-type AdminsDomain struct {
+// Admin
+type AdminDomain struct {
 	ID        uint
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt
+	ImagePath string // Perubahan nama dari Image_Path ke ImagePath
 	Name      string
+	Email     string
+	Phone     string
+	RoleID    uint
+	RoleName  string
 	Voucher   string
 	Password  string
+}
+
+type RoleDomain struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
+	RoleName  string
 }
 
 // Customers
@@ -132,6 +145,19 @@ type ItemTransactionsDomain struct {
 	SubTotal     int
 }
 
+// Role       RoleDomain
+
+// type AdminProfileDomain struct {
+// 	ID         uint
+// 	CreatedAt  time.Time
+// 	UpdatedAt  time.Time
+// 	DeletedAt  gorm.DeletedAt
+// 	Name       string
+// 	Nip        string
+// 	Division   string
+// 	Image_Path string
+// }
+
 // One Carts To Many CartItems
 // type CartsDomain struct {
 // 	ID         uint
@@ -146,9 +172,21 @@ type ItemTransactionsDomain struct {
 
 type Usecase interface {
 	// Admin
-	AdminRegister(ctx context.Context, adminDomain *AdminsDomain) (AdminsDomain, error)
-	AdminLogin(ctx context.Context, adminDomain *AdminsDomain) (string, error)
-	AdminVoucher(ctx context.Context, adminDomain *AdminsDomain) (string, error)
+	AdminRegister(ctx context.Context, adminDomain *AdminDomain) (AdminDomain, error)
+	AdminLogin(ctx context.Context, adminDomain *AdminDomain) (string, error)
+	AdminVoucher(ctx context.Context, adminDomain *AdminDomain) (string, error)
+	AdminProfileUpdate(ctx context.Context, adminDomain *AdminDomain, imangePath string, id string) (AdminDomain, string, error)
+	AdminGetProfile(ctx context.Context, id string) (AdminDomain, error)
+	AdminGetByID(ctx context.Context, id string) (AdminDomain, error)
+
+	RoleCreate(ctx context.Context, roleDomain *RoleDomain) (RoleDomain, error)
+	RoleGetByID(ctx context.Context, id string) (RoleDomain, error)
+	RoleGetAll(ctx context.Context) ([]RoleDomain, error)
+
+	// Admin Profile
+	// AdminProfileUpdate(ctx context.Context, profileDomain *AdminProfileDomain, id string) (AdminProfileDomain, error)
+	// AdminProfileUploadImage(ctx context.Context, profileDomain *AdminProfileDomain, avatarPath string, id string) (AdminProfileDomain, string, error)
+	// AdminProfileGetByID(ctx context.Context, id string) (AdminProfileDomain, error)
 
 	// Customers
 	CustomersGetByID(ctx context.Context, id string) (CustomersDomain, error)
@@ -203,9 +241,22 @@ type Usecase interface {
 
 type Repository interface {
 	// Admin
-	AdminRegister(ctx context.Context, adminDomain *AdminsDomain) (AdminsDomain, error)
-	AdminGetByName(ctx context.Context, adminDomain *AdminsDomain) (AdminsDomain, error)
-	AdminGetByVoucher(ctx context.Context, adminDomain *AdminsDomain) (AdminsDomain, error)
+	AdminRegister(ctx context.Context, adminDomain *AdminDomain) (AdminDomain, error)
+	AdminGetByEmail(ctx context.Context, adminDomain *AdminDomain) (AdminDomain, error)
+	AdminGetByVoucher(ctx context.Context, adminDomain *AdminDomain) (AdminDomain, error)
+	AdminProfileUpdate(ctx context.Context, adminDomain *AdminDomain, imangePath string, id string) (AdminDomain, string, error)
+	// AdminGetInfo(ctx context.Context, id string) (AdminDomain, error)
+
+	AdminGetByID(ctx context.Context, id string) (AdminDomain, error)
+
+	RoleCreate(ctx context.Context, roleDomain *RoleDomain) (RoleDomain, error)
+	RoleGetByID(ctx context.Context, id string) (RoleDomain, error)
+	RoleGetAll(ctx context.Context) ([]RoleDomain, error)
+
+	// Admin Profile
+	// AdminProfileUpdate(ctx context.Context, profileDomain *AdminProfileDomain, id string) (AdminProfileDomain, error)
+	// AdminProfileUploadImage(ctx context.Context, profileDomain *AdminProfileDomain, avatarPath string, id string) (AdminProfileDomain, string, error)
+	// AdminProfileGetByID(ctx context.Context, id string) (AdminProfileDomain, error)
 
 	// Customers
 	CustomersGetByID(ctx context.Context, id string) (CustomersDomain, error)

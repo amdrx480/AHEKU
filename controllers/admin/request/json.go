@@ -8,19 +8,45 @@ import (
 )
 
 type AdminRegistration struct {
-	Name     string `json:"name" validate:"required"`
+	ImagePath string `json:"image_path"`
+	Name      string `json:"name" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	Phone     string `json:"phone" validate:"required"`
+	RoleID    uint   `json:"role_id" validate:"required"`
+
+	// Role       Role   `json:"role" validate:"required"`
+	// Role       string `json:"role" validate:"required"`
 	Voucher  string `json:"voucher" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
 type AdminLogin struct {
-	Name     string `json:"name" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
 
 type AdminVoucher struct {
 	Voucher string `json:"voucher" validate:"required"`
 }
+
+type AdminUpdate struct {
+	ImagePath string `json:"image_path"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Phone     string `json:"phone" validate:"required"`
+	Voucher   string `json:"voucher"`
+}
+
+type Role struct {
+	RoleName string `json:"role_name"`
+}
+
+// type AdminProfile struct {
+// 	Name       string `json:"name" validate:"NotEmpty"`
+// 	Nip        string `json:"nip" validate:"required,NotEmpty"`
+// 	Division   string `json:"division" validate:"required,NotEmpty"`
+// 	Image_Path string `json:"image_path"`
+// }
 
 type Customers struct {
 	CustomerName    string `json:"customer_name" validate:"required"`
@@ -80,26 +106,56 @@ type CartItems struct {
 // 	CustomerID uint `json:"customer_id" validate:"required"`
 // }
 
-func (request *AdminRegistration) ToAdminRegistrationDomain() *admin.AdminsDomain {
-	return &admin.AdminsDomain{
-		Name:     request.Name,
+func (request *AdminRegistration) ToAdminRegistrationDomain() *admin.AdminDomain {
+	return &admin.AdminDomain{
+		ImagePath: request.ImagePath,
+		Name:      request.Name,
+		Email:     request.Email,
+		Phone:     request.Phone,
+		RoleID:    request.RoleID,
+		// Role:       admin.RoleDomain{RoleName: request.Role.RoleName},
 		Voucher:  request.Voucher,
 		Password: request.Password,
 	}
 }
 
-func (request *AdminLogin) ToAdminLoginDomain() *admin.AdminsDomain {
-	return &admin.AdminsDomain{
-		Name:     request.Name,
+func (request *AdminLogin) ToAdminLoginDomain() *admin.AdminDomain {
+	return &admin.AdminDomain{
+		Name:     request.Email,
 		Password: request.Password,
 	}
 }
 
-func (request *AdminVoucher) ToAdminVoucherDomain() *admin.AdminsDomain {
-	return &admin.AdminsDomain{
+func (request *AdminVoucher) ToAdminVoucherDomain() *admin.AdminDomain {
+	return &admin.AdminDomain{
 		Voucher: request.Voucher,
 	}
 }
+
+func (request *AdminUpdate) ToAdminUpdateDomain() *admin.AdminDomain {
+	return &admin.AdminDomain{
+		ImagePath: request.ImagePath,
+		Name:      request.Name,
+		Email:     request.Email,
+		Phone:     request.Phone,
+		Voucher:   request.Voucher,
+	}
+}
+
+func (req *Role) ToRoleDomain() *admin.RoleDomain {
+	return &admin.RoleDomain{
+		RoleName: req.RoleName,
+	}
+}
+
+// func (req *AdminProfile) ToDomain() *admin.AdminProfileDomain {
+// 	return &admin.AdminProfileDomain{
+// 		Name:       req.Name,
+// 		Nip:        req.Nip,
+// 		Division:   req.Division,
+// 		Image_Path: req.Image_Path,
+// 	}
+// }
 
 func (request *Customers) ToCustomersDomain() *admin.CustomersDomain {
 	return &admin.CustomersDomain{
@@ -208,6 +264,14 @@ func (request *AdminVoucher) Validate() error {
 
 	return err
 }
+
+func (request *Role) Validate() error {
+	return validateRequest(request)
+}
+
+// func (request *AdminProfile) Validate() error {
+// 	return validateRequest(request)
+// }
 
 func (request *Customers) Validate() error {
 	validate := validator.New()

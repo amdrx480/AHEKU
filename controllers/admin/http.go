@@ -1,12 +1,18 @@
 package admin
 
 import (
+	"backend-golang/app/middlewares"
 	"backend-golang/businesses/admin"
 	"backend-golang/controllers"
 	"backend-golang/controllers/admin/request"
 	"backend-golang/controllers/admin/response"
+	"backend-golang/utils"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"reflect"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -92,6 +98,350 @@ func (ctrl *AuthController) AdminVoucher(c echo.Context) error {
 	return controllers.NewResponseLoginVoucher(c, http.StatusOK, false, "voucher success", voucherResult)
 }
 
+func (ctrl *AuthController) AdminProfileUpdate(c echo.Context) error {
+	ctx := c.Request().Context()
+	userData, err := middlewares.GetUser(c)
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusUnauthorized, true, err.Error(), "")
+	}
+
+	// Handling Upload File (Gambar)
+	file, err := c.FormFile("image")
+	var fileName string
+	if err == nil {
+		// Jika ada file yang diunggah, simpan ke direktori yang sesuai
+		uploadDir := "images"
+		filePath, err := utils.SaveUploadedFile(file, uploadDir)
+		if err != nil {
+			return controllers.NewResponse(c, http.StatusInternalServerError, true, "unable to save file", "")
+		}
+		fileName = utils.GetFileName(filePath)
+	}
+
+	// Bind JSON data dari form-data
+	jsonData := c.FormValue("data")
+	var adminInput request.AdminUpdate
+	if jsonData != "" {
+		if err := json.Unmarshal([]byte(jsonData), &adminInput); err != nil {
+			return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid JSON data", "")
+		}
+	}
+
+	// Jika tidak ada perubahan yang dilakukan pada kedua data admin dan gambar
+	if fileName == "" && reflect.DeepEqual(adminInput, request.AdminUpdate{}) {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "no updates provided", "")
+	}
+
+	// Update Profil Admin jika ada perubahan pada data admin atau gambar
+	if fileName != "" || !reflect.DeepEqual(adminInput, request.AdminUpdate{}) {
+		_, _, err := ctrl.authUseCase.AdminProfileUpdate(ctx, adminInput.ToAdminUpdateDomain(), fileName, strconv.Itoa(userData.ID))
+		if err != nil {
+			return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+		}
+	}
+
+	// Mendapatkan data admin setelah pembaruan
+	user, err := ctrl.authUseCase.AdminGetByID(ctx, strconv.Itoa(userData.ID))
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+	}
+
+	// Menyiapkan dan Mengembalikan Respons
+	return controllers.NewResponse(c, http.StatusOK, false, "admin profile updated", response.FromAdminsDomain(user))
+}
+
+// func (ctrl *AuthController) AdminProfileUpdate(c echo.Context) error {
+// 	ctx := c.Request().Context()
+// 	userData, err := middlewares.GetUser(c)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusUnauthorized, true, err.Error(), "")
+// 	}
+
+// 	// adminInput := request.AdminUpdate{}
+// 	// if err := c.Bind(&adminInput); err != nil {
+// 	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	// }
+
+// 	// Bind JSON data from form-data
+// 	// jsonData := c.FormValue("data")
+// 	// adminInput := request.AdminUpdate{}
+// 	// if err := json.Unmarshal([]byte(jsonData), &adminInput); err != nil {
+// 	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid JSON data", "")
+// 	// }
+
+// 	file, err := c.FormFile("image")
+// 	var fileName string
+// 	if err == nil {
+// 		// uploadDir := "D:/Skripsi/AHEKU/AHEKU/images"
+// 		uploadDir := "images"
+// 		filePath, err := utils.SaveUploadedFile(file, uploadDir)
+// 		if err != nil {
+// 			return controllers.NewResponse(c, http.StatusInternalServerError, true, "unable to save file", "")
+// 		}
+// 		fileName = utils.GetFileName(filePath)
+// 	}
+
+// 	// Lakukan bind JSON data jika tidak ada file yang diunggah
+// 	var adminInput request.AdminUpdate
+// 	if fileName == "" {
+// 		jsonData := c.FormValue("data")
+// 		if err := json.Unmarshal([]byte(jsonData), &adminInput); err != nil {
+// 			return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid JSON data", "")
+// 		}
+// 	}
+
+// 	// Update admin data
+// 	user, _, err := ctrl.authUseCase.AdminProfileUpdate(ctx, adminInput.ToAdminUpdateDomain(), fileName, strconv.Itoa(userData.ID))
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "admin profile updated", response.FromAdminUpdateDomain(user))
+
+// 	//agar dapat menampilkan gambar jika dibuat url
+// 	// fileURL := fmt.Sprintf("http://localhost:8080/images/%s", fileName)
+// 	// fileURL := fmt.Sprintf(fileName)
+
+// 	// response := response.FromAdminUpdateDomain(user)
+// 	// response.ImagePath = fileURL
+
+// 	// return controllers.NewResponse(c, http.StatusOK, false, "admin profile updated", response)
+// }
+
+// func (ctrl *AuthController) AdminProfileUpdate(c echo.Context) error {
+// 	ctx := c.Request().Context()
+// 	// Mendapatkan data user dari token
+// 	userData, err := middlewares.GetUser(c)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusUnauthorized, true, err.Error(), "")
+// 	}
+
+// 	adminInput := request.AdminUpdate{}
+
+// 	// userID := c.Param("id")
+// 	file, err := c.FormFile("image")
+
+// 	var filePath string
+// 	if err != nil {
+
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "error handling file upload", "")
+// 	}
+
+// 	src, err := file.Open()
+// 	if err != nil {
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Unable to open file", "")
+// 	}
+// 	defer src.Close()
+
+// 	avatarPath := file.Filename
+// 	user, _, err := ctrl.authUseCase.AdminProfileUpdate(ctx, adminInput.ToAdminUpdateDomain(), avatarPath, strconv.Itoa(userData.ID))
+
+// 	if err != nil {
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "customer profile image updated", response.FromAdminUpdateDomain(user))
+// }
+
+func (ctrl *AuthController) AdminGetProfile(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	// Mendapatkan data user dari token
+	userData, err := middlewares.GetUser(c)
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusUnauthorized, true, err.Error(), "")
+	}
+
+	// Menggunakan ID dari token untuk mengambil data admin
+	user, err := ctrl.authUseCase.AdminGetByID(ctx, strconv.Itoa(userData.ID))
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+	}
+
+	// Konversi admin domain ke respons dengan URL gambar lengkap
+	resp := response.FromAdminsDomain(user)
+	if user.ImagePath != "" {
+		resp.ImagePath = fmt.Sprintf("http://192.168.100.91:8080/images/%s", user.ImagePath)
+	}
+	return controllers.NewResponse(c, http.StatusOK, false, "admin info found", resp)
+
+	// return controllers.NewResponse(c, http.StatusOK, false, "admin info found", response.FromAdminsDomain(user))
+}
+
+// func (ctrl *AuthController) AdminGetInfo(c echo.Context) error {
+// 	// Ambil informasi pengguna dari token JWT
+// 	user, err := middlewares.GetUser(c)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusUnauthorized, true, "invalid token", "")
+// 	}
+
+// 	ctx := c.Request().Context()
+
+// 	// Ambil informasi admin berdasarkan ID yang terdapat dalam token JWT
+// 	admin, err := ctrl.authUseCase.AdminGetByID(ctx, strconv.Itoa(user.ID))
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "admin get info found", response.FromAdminsDomain(admin))
+// }
+
+func (ctrl *AuthController) AdminGetByID(c echo.Context) error {
+	var adminsID string = c.Param("id")
+
+	ctx := c.Request().Context()
+
+	user, err := ctrl.authUseCase.AdminGetByID(ctx, adminsID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "admin get by id found", response.FromAdminsDomain(user))
+}
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (pc *AuthController) RoleCreate(c echo.Context) error {
+	input := request.Role{}
+	ctx := c.Request().Context()
+
+	if err := c.Bind(&input); err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	err := input.Validate()
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	role, err := pc.authUseCase.RoleCreate(ctx, input.ToRoleDomain())
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a role", "")
+	}
+
+	return controllers.NewResponse(c, http.StatusCreated, false, "role registered", response.FromRoleDomain(role))
+}
+
+func (cc *AuthController) RoleGetByID(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	roleID := c.Param("id")
+
+	role, err := cc.authUseCase.RoleGetByID(ctx, roleID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusNotFound, true, "role not found", "")
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "role found", response.FromRoleDomain(role))
+}
+
+func (pc *AuthController) RoleGetAll(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	roleData, err := pc.authUseCase.RoleGetAll(ctx)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
+	}
+
+	roles := []response.Role{}
+
+	for _, role := range roleData {
+		roles = append(roles, response.FromRoleDomain(role))
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "all vendors", roles)
+}
+
+// func (ctrl *AuthController) AdminProfileUpdate(c echo.Context) error {
+// 	profileInput := request.AdminProfile{}
+// 	ctx := c.Request().Context()
+
+// 	var userID string = c.Param("id")
+
+// 	if err := c.Bind(&profileInput); err != nil {
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	}
+
+// 	err := profileInput.Validate()
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+// 	}
+// 	//percobaan
+// 	if userID == "" {
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid user ID", "")
+// 	}
+
+// 	// nil
+// 	profile, err := ctrl.authUseCase.AdminProfileUpdate(ctx, profileInput.ToDomain(), userID)
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, "No data found", "")
+// 	}
+
+// 	// nil
+// 	return controllers.NewResponse(c, http.StatusOK, false, "customer updated", response.FromAdminProfileDomain(profile))
+// }
+
+// func (ctrl *AuthController) AdminProfileUploadImage(c echo.Context) error {
+// 	profileInput := request.AdminProfile{}
+// 	ctx := c.Request().Context()
+
+// 	userID := c.Param("id")
+// 	file, err := c.FormFile("image")
+
+// 	if err != nil {
+
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusBadRequest, true, "error handling file upload", "")
+// 	}
+
+// 	src, err := file.Open()
+// 	if err != nil {
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Unable to open file", "")
+// 	}
+// 	defer src.Close()
+
+// 	avatarPath := file.Filename
+// 	user, _, err := ctrl.authUseCase.AdminProfileUploadImage(ctx, profileInput.ToDomain(), avatarPath, userID)
+
+// 	if err != nil {
+// 		fmt.Println("Unable to open file:", err.Error())
+
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "customer profile image updated", user)
+// }
+
+// func (ctrl *AuthController) AdminProfileGetByID(c echo.Context) error {
+// 	var userID string = c.Param("id")
+
+// 	ctx := c.Request().Context()
+
+// 	user, err := ctrl.authUseCase.AdminProfileGetByID(ctx, userID)
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusNotFound, true, err.Error(), "")
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "admin profile found", response.FromAdminProfileDomain(user))
+// }
+
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 func (cc *AuthController) CustomersGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -366,20 +716,60 @@ func (cc *AuthController) PurchasesGetByID(c echo.Context) error {
 func (pc *AuthController) PurchasesGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	// Fetch purchases data from use case
 	purchasesData, err := pc.authUseCase.PurchasesGetAll(ctx)
-
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
 	}
 
+	// Convert domain purchases to response purchases
 	purchases := []response.Purchases{}
-
 	for _, purchase := range purchasesData {
 		purchases = append(purchases, response.FromPurchasesDomain(purchase))
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "all purchases", purchases)
+	// Paginate the purchases data based on query parameters
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	if page == 0 {
+		page = 1 // Default to page 1 if not specified or invalid
+	}
+
+	// Menentukan default item per page yang di tampilkan
+	size, _ := strconv.Atoi(c.QueryParam("size"))
+	if size == 0 {
+		size = 5 // Default to 10 items per page if not specified or invalid
+	}
+	totalItems := len(purchases)
+
+	// Slice data based on pagination parameters
+	paginatedData := utils.Paginate(purchases, page, size)
+
+	// paginatedData, err := utils.Paginate(purchases, page, size)
+	// if err != nil {
+	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, err.Error(), "")
+	// }
+
+	// Prepare paginated response using NewPaginatedResponse
+	return controllers.NewPaginatedResponse(c, http.StatusOK, "All categories", paginatedData, page, size, totalItems)
 }
+
+// func (pc *AuthController) PurchasesGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	purchasesData, err := pc.authUseCase.PurchasesGetAll(ctx)
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
+// 	}
+
+// 	purchases := []response.Purchases{}
+
+// 	for _, purchase := range purchasesData {
+// 		purchases = append(purchases, response.FromPurchasesDomain(purchase))
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "all purchases", purchases)
+// }
 
 func (sc *AuthController) StocksCreate(c echo.Context) error {
 	input := request.Stocks{}
@@ -421,20 +811,54 @@ func (cc *AuthController) StocksGetByID(c echo.Context) error {
 func (sc *AuthController) StocksGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	categoriesData, err := sc.authUseCase.StocksGetAll(ctx)
-
+	// Fetch stocks data from use case
+	stocksData, err := sc.authUseCase.StocksGetAll(ctx)
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+		// return controllers.NewPaginatedResponse(c, http.StatusInternalServerError, "failed to fetch data", nil, 1, 10, 0)
 	}
 
-	categories := []response.Stocks{}
-
-	for _, category := range categoriesData {
-		categories = append(categories, response.FromStocksDomain(category))
+	// Convert domain stocks to response stocks
+	stocks := []response.Stocks{}
+	for _, stock := range stocksData {
+		stocks = append(stocks, response.FromStocksDomain(stock))
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "all categories", categories)
+	// Paginate the stocks data based on query parameters
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	if page == 0 {
+		page = 1 // Default to page 1 if not specified or invalid
+	}
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit == 0 {
+		limit = 5 // Default to 10 items per page if not specified or invalid
+	}
+	totalItems := len(stocks)
+
+	// Slice data based on pagination parameters
+	paginatedData := utils.Paginate(stocks, page, limit)
+
+	// Prepare paginated response using NewPaginatedResponse
+	return controllers.NewPaginatedResponse(c, http.StatusOK, "All stocks", paginatedData, page, limit, totalItems)
 }
+
+// func (sc *AuthController) StocksGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	stocksData, err := sc.authUseCase.StocksGetAll(ctx)
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
+// 	}
+
+// 	categories := []response.Stocks{}
+
+// 	for _, category := range stocksData {
+// 		categories = append(categories, response.FromStocksDomain(category))
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "all categories", categories)
+// }
 
 func (sc *AuthController) CartItemsCreate(c echo.Context) error {
 	input := request.CartItems{}
@@ -582,7 +1006,7 @@ func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
 // 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Missing item transactions data", "")
 // 	}
 
-// 	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", _resHistory.FromDomain(history))
+// 	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", _resHistory.FromAdminProfileDomain(history))
 // 	// return controllers.NewResponse(c, http.StatusCreated, false, "Success ToHistory Data", " ")
 // 	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "Success item transactions Data")
 

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"backend-golang/businesses/admin"
+	"backend-golang/utils"
 	"context"
 	"fmt"
 	"log"
@@ -20,61 +21,369 @@ func NewMySQLRepository(conn *gorm.DB) admin.Repository {
 	}
 }
 
-func (ur *adminRepository) AdminRegister(ctx context.Context, adminDomain *admin.AdminsDomain) (admin.AdminsDomain, error) {
+func (ur *adminRepository) AdminRegister(ctx context.Context, adminDomain *admin.AdminDomain) (admin.AdminDomain, error) {
 	password, err := bcrypt.GenerateFromPassword([]byte(adminDomain.Password), bcrypt.DefaultCost)
-
 	if err != nil {
-		return admin.AdminsDomain{}, err
+		return admin.AdminDomain{}, err
 	}
 
-	record := FromAdminsDomain(adminDomain)
-
+	// Membuat Admin dari AdminDomain
+	record := FromAdminDomain(adminDomain)
 	record.Password = string(password)
 
+	// Simpan Admin
 	result := ur.conn.WithContext(ctx).Create(&record)
-
-	if err := result.Error; err != nil {
-		return admin.AdminsDomain{}, err
+	if result.Error != nil {
+		return admin.AdminDomain{}, result.Error
 	}
 
-	err = result.Last(&record).Error
-
+	// Mengambil data Admin terbaru dengan Role terkait
+	err = ur.conn.WithContext(ctx).Preload("Role").Last(&record).Error
 	if err != nil {
-		return admin.AdminsDomain{}, err
+		return admin.AdminDomain{}, err
 	}
 
-	return record.ToAdminsDomain(), nil
+	return record.ToAdminDomain(), nil
 }
 
-func (ur *adminRepository) AdminGetByName(ctx context.Context, adminDomain *admin.AdminsDomain) (admin.AdminsDomain, error) {
-	var admins Admins
+// func (ur *adminRepository) AdminRegister(ctx context.Context, adminDomain *admin.AdminDomain) (admin.AdminDomain, error) {
+// 	// Membuat AdminProfile dari AdminDomain
+// 	adminProfile := FromAdminProfileDomain(&adminDomain.AdminProfile)
 
-	err := ur.conn.WithContext(ctx).First(&admins, "name = ?", adminDomain.Name).Error
+// 	// Set nama admin di profil admin
+// 	adminProfile.Name = adminDomain.Name
+
+// 	// Simpan AdminProfile terlebih dahulu
+// 	profileResult := ur.conn.WithContext(ctx).Create(&adminProfile)
+// 	if profileResult.Error != nil {
+// 		return admin.AdminDomain{}, profileResult.Error
+// 	}
+
+// 	password, err := bcrypt.GenerateFromPassword([]byte(adminDomain.Password), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	// Set AdminProfileID dengan ID AdminProfile yang baru disimpan
+// 	adminDomain.AdminProfileID = adminProfile.ID
+
+// 	// Membuat Admin dari AdminDomain
+// 	record := FromAdminDomain(adminDomain)
+// 	record.Password = string(password)
+
+// 	// Simpan Admin
+// 	result := ur.conn.WithContext(ctx).Create(&record)
+// 	if result.Error != nil {
+// 		return admin.AdminDomain{}, result.Error
+// 	}
+
+// 	// Mengambil data Admin terbaru dengan AdminProfile terkait
+// 	err = ur.conn.WithContext(ctx).Preload("AdminProfile").Last(&record).Error
+// 	if err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	return record.ToAdminDomain(), nil
+// }
+
+// func (ur *adminRepository) AdminRegister(ctx context.Context, adminDomain *admin.AdminDomain) (admin.AdminDomain, error) {
+// 	var adminProfile AdminProfile
+// 	// adminProfile.Name = adminDomain.AdminProfile.Name
+// 	// adminProfile.Nip = adminDomain.AdminProfile.Nip
+// 	// adminProfile.Division = adminDomain.AdminProfile.Division
+// 	// adminProfile.Image_Path = adminDomain.AdminProfile.Image_Path
+
+// 	// // Membuat AdminProfile
+// 	// adminProfile := AdminProfile{
+// 	// 	Name:       adminDomain.AdminProfile.Name,
+// 	// 	Nip:        adminDomain.AdminProfile.Nip,
+// 	// 	Division:   adminDomain.AdminProfile.Division,
+// 	// 	Image_Path: adminDomain.AdminProfile.Image_Path,
+// 	// }
+
+// 	// Simpan AdminProfile terlebih dahulu
+// 	profileResult := ur.conn.WithContext(ctx).Create(&adminProfile)
+// 	if profileResult.Error != nil {
+// 		return admin.AdminDomain{}, profileResult.Error
+// 	}
+
+// 	password, err := bcrypt.GenerateFromPassword([]byte(adminDomain.Password), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	record := FromAdminDomain(adminDomain)
+// 	record.Password = string(password)
+// 	record.AdminProfileID = adminProfile.ID // Set ID dari AdminProfile yang baru disimpan
+// 	// record.Name = adminProfile.Name
+
+// 	result := ur.conn.WithContext(ctx).Create(&record)
+// 	if result.Error != nil {
+// 		return admin.AdminDomain{}, result.Error
+// 	}
+
+// 	err = ur.conn.WithContext(ctx).Preload("AdminProfile").Last(&record).Error
+// 	if err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	return record.ToAdminDomain(), nil
+// }
+
+// func (ur *adminRepository) AdminRegister(ctx context.Context, adminDomain *admin.AdminDomain) (admin.AdminDomain, error) {
+// 	var adminProfile AdminProfile
+// 	adminProfile.Name = adminDomain.Name
+
+// 	password, err := bcrypt.GenerateFromPassword([]byte(adminDomain.Password), bcrypt.DefaultCost)
+
+// 	if err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	record := FromAdminDomain(adminDomain)
+// 	record.Password = string(password)
+// 	record.AdminProfileID = record.AdminProfile.ID
+
+// 	result := ur.conn.WithContext(ctx).Preload("AdminProfile").Create(&record)
+
+// 	if err := result.Error; err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	err = result.Last(&record).Error
+
+// 	if err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	return record.ToAdminDomain(), nil
+// }
+
+func (ur *adminRepository) AdminGetByEmail(ctx context.Context, adminDomain *admin.AdminDomain) (admin.AdminDomain, error) {
+	var admins Admin
+
+	err := ur.conn.WithContext(ctx).First(&admins, "email = ?", adminDomain.Name).Error
 
 	if err != nil {
-		return admin.AdminsDomain{}, err
+		return admin.AdminDomain{}, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(admins.Password), []byte(adminDomain.Password))
 
 	if err != nil {
-		return admin.AdminsDomain{}, err
+		return admin.AdminDomain{}, err
 	}
 
-	return admins.ToAdminsDomain(), nil
+	return admins.ToAdminDomain(), nil
 }
 
-func (ur *adminRepository) AdminGetByVoucher(ctx context.Context, adminDomain *admin.AdminsDomain) (admin.AdminsDomain, error) {
-	var admins Admins
+func (ur *adminRepository) AdminGetByVoucher(ctx context.Context, adminDomain *admin.AdminDomain) (admin.AdminDomain, error) {
+	var admins Admin
 
 	err := ur.conn.WithContext(ctx).First(&admins, "voucher = ?", adminDomain.Voucher).Error
 
 	if err != nil {
-		return admin.AdminsDomain{}, err
+		return admin.AdminDomain{}, err
 	}
 
-	return admins.ToAdminsDomain(), nil
+	return admins.ToAdminDomain(), nil
 }
+
+// // Ambil data admin berdasarkan ID
+// admins, err := ur.AdminGetByID(ctx, id)
+// if err != nil {
+// 	return admin.AdminDomain{}, "", err
+// }
+
+// // Perbarui field-field yang ada pada adminDomain
+// admins.Name = adminDomain.Name
+// admins.Email = adminDomain.Email
+// admins.Phone = adminDomain.Phone
+
+// // Jika imagePath baru diberikan, perbarui ImagePath
+// var prevURL string
+// if imagePath != "" {
+// 	prevURL = admins.ImagePath
+// 	admins.ImagePath = imagePath
+// }
+
+// // Simpan perubahan ke database
+// if err := ur.conn.WithContext(ctx).Save(&admins).Error; err != nil {
+// 	return admin.AdminDomain{}, "", err
+// }
+
+func (ur *adminRepository) AdminProfileUpdate(ctx context.Context, adminDomain *admin.AdminDomain, imagePath string, id string) (admin.AdminDomain, string, error) {
+	admins, err := ur.AdminGetByID(ctx, id)
+	if err != nil {
+		return admin.AdminDomain{}, "", err
+	}
+
+	// Ambil nama file menggunakan utilitas
+	fileName := utils.GetFileName(imagePath)
+
+	updateAdmin := FromAdminDomain(&admins)
+
+	if adminDomain.Name != "" {
+		updateAdmin.Name = adminDomain.Name
+	}
+	if adminDomain.Email != "" {
+		updateAdmin.Email = adminDomain.Email
+	}
+	if adminDomain.Phone != "" {
+		updateAdmin.Phone = adminDomain.Phone
+	}
+
+	// Simpan nama file jika ada perubahan
+	if fileName != "" && fileName != "." {
+		updateAdmin.ImagePath = fileName // Hanya menyimpan nama file
+	}
+
+	if err := ur.conn.WithContext(ctx).Save(&updateAdmin).Error; err != nil {
+		return admin.AdminDomain{}, "", err
+	}
+
+	return updateAdmin.ToAdminDomain(), fileName, nil
+}
+
+// func (ur *adminRepository) AdminProfileUpdate(ctx context.Context, profileDomain *admin.AdminDomain, avatarPath string, id string) (admin.AdminDomain, string, error) {
+// 	var admins Admin
+
+// 	if err := ur.conn.WithContext(ctx).First(&admins, "id = ?", id).Error; err != nil {
+// 		return admin.AdminDomain{}, "", err
+// 	}
+
+// 	prev_url := admins.ImagePath
+// 	admins.ImagePath = avatarPath
+
+// 	if err := ur.conn.WithContext(ctx).Save(&admins).Error; err != nil {
+// 		return admin.AdminDomain{}, "", err
+// 	}
+
+// 	return admins.ToAdminDomain(), prev_url, nil
+// }
+
+// func (ur *adminRepository) AdminGetInfo(ctx context.Context, id string) (admin.AdminDomain, error) {
+// 	var admins Admin
+
+// 	if err := ur.conn.WithContext(ctx).First(&admins, "id = ?", id).Error; err != nil {
+// 		return admin.AdminDomain{}, err
+// 	}
+
+// 	return admins.ToAdminDomain(), nil
+
+// }
+
+func (ur *adminRepository) AdminGetByID(ctx context.Context, id string) (admin.AdminDomain, error) {
+	var admins Admin
+
+	if err := ur.conn.WithContext(ctx).Preload("Role").First(&admins, "id = ?", id).Error; err != nil {
+		return admin.AdminDomain{}, err
+	}
+
+	return admins.ToAdminDomain(), nil
+
+}
+
+func (vr *adminRepository) RoleCreate(ctx context.Context, roleDomain *admin.RoleDomain) (admin.RoleDomain, error) {
+	record := FromRoleDomain(roleDomain)
+	result := vr.conn.WithContext(ctx).Create(&record)
+
+	if err := result.Error; err != nil {
+		return admin.RoleDomain{}, err
+	}
+
+	if err := result.Last(&record).Error; err != nil {
+		return admin.RoleDomain{}, err
+	}
+
+	return record.ToRoleDomain(), nil
+
+}
+
+func (vr *adminRepository) RoleGetByID(ctx context.Context, id string) (admin.RoleDomain, error) {
+	var role Role
+
+	if err := vr.conn.WithContext(ctx).First(&role, "id = ?", id).Error; err != nil {
+		return admin.RoleDomain{}, err
+	}
+
+	return role.ToRoleDomain(), nil
+
+}
+
+func (sr *adminRepository) RoleGetAll(ctx context.Context) ([]admin.RoleDomain, error) {
+	var records []Role
+	if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {
+		return nil, err
+	}
+
+	roles := []admin.RoleDomain{}
+
+	for _, role := range records {
+		domain := role.ToRoleDomain()
+		roles = append(roles, domain)
+	}
+
+	return roles, nil
+}
+
+// func (ur *adminRepository) AdminProfileUpdate(ctx context.Context, profileDomain *admin.AdminProfileDomain, id string) (admin.AdminProfileDomain, error) {
+// 	var profile AdminProfile
+
+// 	// Preload "Admin" untuk memastikan data User ter-load
+// 	if err := ur.conn.WithContext(ctx).First(&profile, "id = ?", id).Error; err != nil {
+// 		return admin.AdminProfileDomain{}, err
+// 	}
+
+// 	// Update hanya jika nilai berbeda
+// 	if profile.Name != profileDomain.Name {
+// 		profile.Name = profileDomain.Name
+// 	}
+
+// 	if profile.Nip != profileDomain.Nip {
+// 		profile.Nip = profileDomain.Nip
+// 	}
+
+// 	if profile.Division != profileDomain.Division {
+// 		profile.Division = profileDomain.Division
+// 	}
+
+// 	// Simpan perubahan ke database
+// 	if err := ur.conn.WithContext(ctx).Save(&profile).Error; err != nil {
+// 		return admin.AdminProfileDomain{}, err
+// 	}
+
+// 	// Mengembalikan profil yang telah diperbarui
+// 	return profile.ToAdminProfileDomain(), nil
+// }
+
+// func (ur *adminRepository) AdminProfileUploadImage(ctx context.Context, profileDomain *admin.AdminProfileDomain, avatarPath string, id string) (admin.AdminProfileDomain, string, error) {
+// 	var profile AdminProfile
+
+// 	if err := ur.conn.WithContext(ctx).First(&profile, "id = ?", id).Error; err != nil {
+// 		return admin.AdminProfileDomain{}, "", err
+// 	}
+
+// 	prev_url := profile.Image_Path
+// 	profile.Image_Path = avatarPath
+
+// 	if err := ur.conn.WithContext(ctx).Save(&profile).Error; err != nil {
+// 		return admin.AdminProfileDomain{}, "", err
+// 	}
+
+// 	return profile.ToAdminProfileDomain(), prev_url, nil
+// }
+
+// func (ur *adminRepository) AdminProfileGetByID(ctx context.Context, id string) (admin.AdminProfileDomain, error) {
+// 	var profile AdminProfile
+
+// 	if err := ur.conn.WithContext(ctx).First(&profile, "id = ?", id).Error; err != nil {
+// 		return admin.AdminProfileDomain{}, err
+// 	}
+
+// 	return profile.ToAdminProfileDomain(), nil
+
+// }
 
 func (cr *adminRepository) CustomersCreate(ctx context.Context, customersDomain *admin.CustomersDomain) (admin.CustomersDomain, error) {
 	record := FromCustomersDomain(customersDomain)
@@ -123,8 +432,8 @@ func (sr *adminRepository) CustomersGetAll(ctx context.Context) ([]admin.Custome
 }
 
 // Categories
-func (cr *adminRepository) CategoryCreate(ctx context.Context, AdminsDomain *admin.CategoriesDomain) (admin.CategoriesDomain, error) {
-	record := FromCategoriesDomain(AdminsDomain)
+func (cr *adminRepository) CategoryCreate(ctx context.Context, AdminDomain *admin.CategoriesDomain) (admin.CategoriesDomain, error) {
+	record := FromCategoriesDomain(AdminDomain)
 	result := cr.conn.WithContext(ctx).Create(&record)
 
 	if err := result.Error; err != nil {
@@ -153,7 +462,7 @@ func (cr *adminRepository) CategoryGetByID(ctx context.Context, id string) (admi
 func (cr *adminRepository) CategoryGetByName(ctx context.Context, name string) (admin.CategoriesDomain, error) {
 	var categories Categories
 
-	if err := cr.conn.WithContext(ctx).First(&categories, "admin_name = ?", name).Error; err != nil {
+	if err := cr.conn.WithContext(ctx).First(&categories, "name = ?", name).Error; err != nil {
 		return admin.CategoriesDomain{}, err
 	}
 

@@ -7,15 +7,45 @@ import (
 	"gorm.io/gorm"
 )
 
-type Admins struct {
+type Admin struct {
+	ID        uint           `gorm:"primaryKey"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+	ImagePath string         `json:"image_path"`
+	Name      string         `json:"name" gorm:"not null"`
+	Email     string         `json:"email" gorm:"unique;not null"`
+	Phone     string         `json:"phone" gorm:"unique;not null"`
+	Role      Role           `gorm:"foreignKey:RoleID"`
+	RoleID    uint           `json:"role_id"`
+	RoleName  string         `json:"role_name"`
+	Voucher   string         `json:"voucher" gorm:"unique;not null"`
+	Password  string         `json:"password" gorm:"not null"`
+}
+
+type Role struct {
 	ID        uint           `json:"id" gorm:"primaryKey"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
-	Name      string         `json:"name" gorm:"unique;not null"`
-	Voucher   string         `json:"voucher" gorm:"unique;not null"`
-	Password  string         `json:"password"`
+	RoleName  string         `json:"role_name" gorm:"unique;not null"`
 }
+
+// RoleName  string         `json:"role_name" gorm:"primaryKey;unique;not null"`
+// RoleName  string         `json:"role_name" gorm:"primaryKey;unique;not null"`
+
+// type AdminProfile struct {
+// 	// Admin
+// 	ID        uint           `json:"id" gorm:"primaryKey"`
+// 	CreatedAt time.Time      `json:"created_at"`
+// 	UpdatedAt time.Time      `json:"updated_at"`
+// 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+// 	// AdminID    uint           `json:"admin_id" gorm:"unique"` // Bidang ini menunjukkan hubungan one-to-one dengan Admin
+// 	Name       string `json:"name"`
+// 	Nip        string `json:"nip"`
+// 	Division   string `json:"division"`
+// 	Image_Path string `json:"image_path"`
+// }
 
 type Customers struct {
 	ID              uint           `json:"id" gorm:"primaryKey"`
@@ -129,29 +159,89 @@ type ItemTransactions struct {
 	SubTotal   int            `json:"sub_total"`
 }
 
-func (record *Admins) ToAdminsDomain() admin.AdminsDomain {
-	return admin.AdminsDomain{
+func (record *Admin) ToAdminDomain() admin.AdminDomain {
+	// baseURL := os.Getenv("BASE_URL")
+
+	return admin.AdminDomain{
 		ID:        record.ID,
 		CreatedAt: record.CreatedAt,
 		UpdatedAt: record.UpdatedAt,
 		DeletedAt: record.DeletedAt,
-		Name:      record.Name,
-		Voucher:   record.Voucher,
-		Password:  record.Password,
+		ImagePath: record.ImagePath,
+		// ImagePath: fmt.Sprintf("%s/images/%s", baseURL, record.ImagePath),
+		Name:     record.Name,
+		Email:    record.Email,
+		Phone:    record.Phone,
+		RoleID:   record.RoleID,
+		RoleName: record.Role.RoleName,
+		Voucher:  record.Voucher,
+		Password: record.Password,
 	}
 }
 
-func FromAdminsDomain(domain *admin.AdminsDomain) *Admins {
-	return &Admins{
+func FromAdminDomain(domain *admin.AdminDomain) *Admin {
+	return &Admin{
 		ID:        domain.ID,
 		CreatedAt: domain.CreatedAt,
 		UpdatedAt: domain.UpdatedAt,
 		DeletedAt: domain.DeletedAt,
+		ImagePath: domain.ImagePath,
 		Name:      domain.Name,
-		Voucher:   domain.Voucher,
-		Password:  domain.Password,
+		Email:     domain.Email,
+		Phone:     domain.Phone,
+		RoleID:    domain.RoleID,
+		// RoleName:  domain.RoleName,
+		Voucher:  domain.Voucher,
+		Password: domain.Password,
 	}
 }
+
+// Role:      domain.Role, // Menggunakan string untuk peran
+
+func (record *Role) ToRoleDomain() admin.RoleDomain {
+	return admin.RoleDomain{
+		ID:        record.ID,
+		CreatedAt: record.CreatedAt,
+		UpdatedAt: record.UpdatedAt,
+		DeletedAt: record.DeletedAt,
+		RoleName:  record.RoleName,
+	}
+}
+func FromRoleDomain(domain *admin.RoleDomain) *Role {
+	return &Role{
+		ID:        domain.ID,
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		RoleName:  domain.RoleName,
+	}
+}
+
+// func (record *AdminProfile) ToAdminProfileDomain() admin.AdminProfileDomain {
+// 	return admin.AdminProfileDomain{
+// 		ID:         record.ID,
+// 		CreatedAt:  record.CreatedAt,
+// 		UpdatedAt:  record.UpdatedAt,
+// 		DeletedAt:  record.DeletedAt,
+// 		Name:       record.Name,
+// 		Nip:        record.Nip,
+// 		Division:   record.Division,
+// 		Image_Path: record.Image_Path,
+// 	}
+// }
+
+// func FromAdminProfileDomain(domain *admin.AdminProfileDomain) *AdminProfile {
+// 	return &AdminProfile{
+// 		ID:         domain.ID,
+// 		CreatedAt:  domain.CreatedAt,
+// 		UpdatedAt:  domain.UpdatedAt,
+// 		DeletedAt:  domain.DeletedAt,
+// 		Name:       domain.Name,
+// 		Nip:        domain.Nip,
+// 		Division:   domain.Division,
+// 		Image_Path: domain.Image_Path,
+// 	}
+// }
 
 func (record *Customers) ToCustomersDomain() admin.CustomersDomain {
 	cartItemsDomain := []admin.CartItemsDomain{}
@@ -402,6 +492,8 @@ func FromItemTransactionsDomain(domain *admin.ItemTransactionsDomain) *ItemTrans
 	}
 }
 
+// AdminProfileID uint           `json:"admin_profile_id" gorm:"not null"`
+// AdminProfile   AdminProfile   `json:"admin_profile" gorm:"foreignKey:AdminProfileID"`
 // func (record *Carts) ToCartsDomain() admin.CartsDomain {
 // 	cartItemsDomain := []admin.CartItemsDomain{}
 // 	for _, item := range record.CartItems {
@@ -434,3 +526,18 @@ func FromItemTransactionsDomain(domain *admin.ItemTransactionsDomain) *ItemTrans
 // 		Total:      domain.Total,
 // 	}
 // }
+
+//	type Admin struct {
+//		ID             uint           `json:"id" gorm:"primaryKey"`
+//		CreatedAt      time.Time      `json:"created_at"`
+//		UpdatedAt      time.Time      `json:"updated_at"`
+//		DeletedAt      gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+//		Name           string         `json:"name" gorm:"not null"`
+//		Email          string         `json:"email" gorm:"unique;not null"`
+//		Phone          string         `json:"phone" gorm:"unique;not null"`
+//		Role           string         `json:"role"`
+//		Voucher        string         `json:"voucher" gorm:"unique;not null"`
+//		Password       string         `json:"password"`
+//		AdminProfileID uint           `json:"admin_profile_id"`
+//		AdminProfile   AdminProfile   `gorm:"foreignKey:AdminProfileID"`
+//	}

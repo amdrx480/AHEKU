@@ -12,10 +12,36 @@ type Admin struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
+	ImagePath string         `json:"image_path"`
 	Name      string         `json:"name"`
-	Voucher   string         `json:"voucher"`
-	Password  string         `json:"password"`
+	Email     string         `json:"email"`
+	Phone     string         `json:"phone"`
+	// Role      admin.RoleDomain
+	RoleID   uint   `json:"role_id"`
+	RoleName string `json:"role_name"`
+	Voucher  string `json:"voucher"`
+	Password string `json:"password"`
 }
+
+// Role           string         `json:"role"`
+
+type Role struct {
+	ID        uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at"`
+	RoleName  string         `json:"role_name"`
+}
+
+// type AdminProfile struct {
+// 	ID        uint           `json:"id" gorm:"primaryKey"`
+// 	CreatedAt time.Time      `json:"created_at"`
+// 	UpdatedAt time.Time      `json:"updated_at"`
+// 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
+// 	Name      string         `json:"name"`
+// 	Nip       string         `json:"nip"`
+// 	Division  string         `json:"division"`
+// }
 
 type Customers struct {
 	ID              uint           `json:"id" gorm:"primaryKey"`
@@ -125,17 +151,69 @@ type ItemTransactions struct {
 	SubTotal     int            `json:"sub_total"`
 }
 
-func FromAdminsDomain(domain admin.AdminsDomain) Admin {
+// Pagination struct holds pagination information
+// type Pagination struct {
+// 	TotalItems  int `json:"totalItems"`
+// 	TotalPages  int `json:"totalPages"`
+// 	CurrentPage int `json:"currentPage"`
+// 	PageSize    int `json:"pageSize"`
+// }
+
+func FromAdminsDomain(domain admin.AdminDomain) Admin {
 	return Admin{
-		ID:        domain.ID,
-		Name:      domain.Name,
-		Voucher:   domain.Voucher,
-		Password:  domain.Password,
 		CreatedAt: domain.CreatedAt,
 		UpdatedAt: domain.UpdatedAt,
 		DeletedAt: domain.DeletedAt,
+		ID:        domain.ID,
+		ImagePath: domain.ImagePath,
+		Name:      domain.Name,
+		Email:     domain.Email,
+		Phone:     domain.Phone,
+		RoleID:    domain.RoleID,
+		RoleName:  domain.RoleName,
+		Voucher:   domain.Voucher,
+		Password:  domain.Password,
 	}
 }
+
+func FromAdminUpdateDomain(domain admin.AdminDomain) Admin {
+	return Admin{
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		ID:        domain.ID,
+		ImagePath: domain.ImagePath,
+		Name:      domain.Name,
+		Email:     domain.Email,
+		Phone:     domain.Phone,
+		// Role: FromAdminUpdateDomain(),
+		RoleID:   domain.RoleID,
+		RoleName: domain.RoleName,
+		Voucher:  domain.Voucher,
+	}
+}
+
+func FromRoleDomain(domain admin.RoleDomain) Role {
+	return Role{
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		ID:        domain.ID,
+		RoleName:  domain.RoleName,
+	}
+}
+
+// func FromAdminProfileDomain(domain admin.AdminProfileDomain) AdminProfile {
+// 	return AdminProfile{
+// 		ID:        domain.ID,
+// 		Name:      domain.Name,
+// 		Nip:       domain.Nip,
+// 		Division:  domain.Division,
+// 		CreatedAt: domain.CreatedAt,
+// 		UpdatedAt: domain.UpdatedAt,
+// 		DeletedAt: domain.DeletedAt,
+// 	}
+// }
 
 func FromCustomersDomain(domain admin.CustomersDomain) Customers {
 	cartItems := []CartItems{}

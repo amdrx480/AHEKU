@@ -1,6 +1,7 @@
 package admin
 
 import (
+	// "backend-golang/app/middlewares"
 	"backend-golang/app/middlewares"
 	"context"
 )
@@ -18,18 +19,19 @@ func NewAdminUseCase(repository Repository, jwtAuth *middlewares.JWTConfig) Usec
 	}
 }
 
-func (usecase *adminUsecase) AdminRegister(ctx context.Context, AdminsDomain *AdminsDomain) (AdminsDomain, error) {
-	return usecase.adminRepository.AdminRegister(ctx, AdminsDomain)
+func (usecase *adminUsecase) AdminRegister(ctx context.Context, AdminDomain *AdminDomain) (AdminDomain, error) {
+	return usecase.adminRepository.AdminRegister(ctx, AdminDomain)
 }
 
-func (usecase *adminUsecase) AdminLogin(ctx context.Context, adminDomain *AdminsDomain) (string, error) {
-	admin, err := usecase.adminRepository.AdminGetByName(ctx, adminDomain)
+func (usecase *adminUsecase) AdminLogin(ctx context.Context, adminDomain *AdminDomain) (string, error) {
+	admin, err := usecase.adminRepository.AdminGetByEmail(ctx, adminDomain)
 
 	if err != nil {
 		return "", err
 	}
 
-	token, err := usecase.jwtAuth.GenerateToken(int(admin.ID))
+	// token, err := usecase.jwtAuth.GenerateToken(int(admin.ID), int(admin.RoleID))
+	token, err := usecase.jwtAuth.GenerateToken(int(admin.ID), admin.RoleName)
 
 	if err != nil {
 		return "", err
@@ -38,15 +40,69 @@ func (usecase *adminUsecase) AdminLogin(ctx context.Context, adminDomain *Admins
 	return token, nil
 }
 
-func (usecase *adminUsecase) AdminVoucher(ctx context.Context, adminDomain *AdminsDomain) (string, error) {
+func (usecase *adminUsecase) AdminVoucher(ctx context.Context, adminDomain *AdminDomain) (string, error) {
+
+	// Periksa apakah voucher ada dalam database
 	admin, err := usecase.adminRepository.AdminGetByVoucher(ctx, adminDomain)
+	if err != nil {
+		return "", err
+	}
+
+	// Jika voucher valid, hasilkan token JWT
+	// token, err := usecase.jwtAuth.GenerateToken(int(admin.ID), int(admin.RoleID))
+	token, err := usecase.jwtAuth.GenerateToken(int(admin.ID), admin.RoleName)
 
 	if err != nil {
 		return "", err
 	}
 
-	return admin.Voucher, nil
+	// Kembalikan token JWT sebagai respons
+	return token, nil
 }
+
+// admin, err := usecase.adminRepository.AdminGetByVoucher(ctx, adminDomain)
+
+// if err != nil {
+// 	return "", err
+// }
+
+// return admin.Voucher, nil
+
+func (usecase *adminUsecase) AdminProfileUpdate(ctx context.Context, adminDomain *AdminDomain, imagePath string, id string) (AdminDomain, string, error) {
+	return usecase.adminRepository.AdminProfileUpdate(ctx, adminDomain, imagePath, id)
+}
+
+func (usecase *adminUsecase) AdminGetProfile(ctx context.Context, id string) (AdminDomain, error) {
+	return usecase.adminRepository.AdminGetByID(ctx, id)
+}
+
+func (usecase *adminUsecase) AdminGetByID(ctx context.Context, id string) (AdminDomain, error) {
+	return usecase.adminRepository.AdminGetByID(ctx, id)
+}
+
+func (usecase *adminUsecase) RoleCreate(ctx context.Context, roleDomain *RoleDomain) (RoleDomain, error) {
+	return usecase.adminRepository.RoleCreate(ctx, roleDomain)
+}
+
+func (usecase *adminUsecase) RoleGetByID(ctx context.Context, id string) (RoleDomain, error) {
+	return usecase.adminRepository.RoleGetByID(ctx, id)
+}
+
+func (usecase *adminUsecase) RoleGetAll(ctx context.Context) ([]RoleDomain, error) {
+	return usecase.adminRepository.RoleGetAll(ctx)
+}
+
+// func (usecase *adminUsecase) AdminProfileGetByID(ctx context.Context, id string) (AdminProfileDomain, error) {
+// 	return usecase.adminRepository.AdminProfileGetByID(ctx, id)
+// }
+
+// func (usecase *adminUsecase) AdminProfileUpdate(ctx context.Context, profileDomain *AdminProfileDomain, id string) (AdminProfileDomain, error) {
+// 	return usecase.adminRepository.AdminProfileUpdate(ctx, profileDomain, id)
+// }
+
+// func (usecase *adminUsecase) AdminProfileUploadImage(ctx context.Context, profileDomain *AdminProfileDomain, avatarPath string, id string) (AdminProfileDomain, string, error) {
+// 	return usecase.adminRepository.AdminProfileUploadImage(ctx, profileDomain, avatarPath, id)
+// }
 
 func (usecase *adminUsecase) CustomersCreate(ctx context.Context, customersDomain *CustomersDomain) (CustomersDomain, error) {
 	return usecase.adminRepository.CustomersCreate(ctx, customersDomain)
@@ -58,6 +114,18 @@ func (usecase *adminUsecase) CustomersGetByID(ctx context.Context, id string) (C
 
 func (usecase *adminUsecase) CustomersGetAll(ctx context.Context) ([]CustomersDomain, error) {
 	return usecase.adminRepository.CustomersGetAll(ctx)
+}
+
+func (usecase *adminUsecase) VendorsCreate(ctx context.Context, vendorsDomain *VendorsDomain) (VendorsDomain, error) {
+	return usecase.adminRepository.VendorsCreate(ctx, vendorsDomain)
+}
+
+func (usecase *adminUsecase) VendorsGetByID(ctx context.Context, id string) (VendorsDomain, error) {
+	return usecase.adminRepository.VendorsGetByID(ctx, id)
+}
+
+func (usecase *adminUsecase) VendorsGetAll(ctx context.Context) ([]VendorsDomain, error) {
+	return usecase.adminRepository.VendorsGetAll(ctx)
 }
 
 func (usecase *adminUsecase) CategoryCreate(ctx context.Context, CategoriesDomain *CategoriesDomain) (CategoriesDomain, error) {
@@ -74,18 +142,6 @@ func (usecase *adminUsecase) CategoryGetByName(ctx context.Context, name string)
 
 func (usecase *adminUsecase) CategoryGetAll(ctx context.Context) ([]CategoriesDomain, error) {
 	return usecase.adminRepository.CategoryGetAll(ctx)
-}
-
-func (usecase *adminUsecase) VendorsCreate(ctx context.Context, vendorsDomain *VendorsDomain) (VendorsDomain, error) {
-	return usecase.adminRepository.VendorsCreate(ctx, vendorsDomain)
-}
-
-func (usecase *adminUsecase) VendorsGetByID(ctx context.Context, id string) (VendorsDomain, error) {
-	return usecase.adminRepository.VendorsGetByID(ctx, id)
-}
-
-func (usecase *adminUsecase) VendorsGetAll(ctx context.Context) ([]VendorsDomain, error) {
-	return usecase.adminRepository.VendorsGetAll(ctx)
 }
 
 func (usecase *adminUsecase) UnitsCreate(ctx context.Context, unitsDomain *UnitsDomain) (UnitsDomain, error) {
