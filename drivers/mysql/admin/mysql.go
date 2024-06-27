@@ -613,23 +613,254 @@ func (ur *adminRepository) StocksGetByID(ctx context.Context, id string) (admin.
 
 }
 
-func (sr *adminRepository) StocksGetAll(ctx context.Context) ([]admin.StocksDomain, error) {
+func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.StocksDomain, int, error) {
 	var records []Stocks
-	if err := sr.conn.WithContext(ctx).
-		Preload("Categories").Preload("Units").
-		Find(&records).Error; err != nil {
-		return nil, err
+	offset := (page - 1) * limit
+
+	// Build the base query with pagination, sorting, and preload
+	query := sr.conn.WithContext(ctx).
+		Preload("Categories").
+		Preload("Units").
+		Offset(offset).
+		Limit(limit).
+		Order(fmt.Sprintf("%s %s", sort, order))
+
+	// Add search condition if search keyword is provided
+	if search != "" {
+		query = query.
+			Joins("LEFT JOIN categories ON categories.id = stocks.category_id").
+			Joins("LEFT JOIN units ON units.id = stocks.unit_id").
+			Where("stocks.stock_name LIKE ?", "%"+search+"%").
+			Or("stocks.stock_code LIKE ?", "%"+search+"%").
+			Or("stocks.description LIKE ?", "%"+search+"%").
+			Or("stocks.selling_price LIKE ?", "%"+search+"%").
+			Or("categories.category_name LIKE ?", "%"+search+"%").
+			Or("units.unit_name LIKE ?", "%"+search+"%")
 	}
 
-	stocksDomain := []admin.StocksDomain{}
-
-	for _, stocks := range records {
-		domain := stocks.ToStocksDomain()
-		stocksDomain = append(stocksDomain, domain)
+	// Add filter conditions
+	for key, value := range filters {
+		switch key {
+		case "category_id":
+			query = query.Where("category_id = ?", value)
+		case "unit_id":
+			query = query.Where("unit_id = ?", value)
+		case "stock_total_min":
+			query = query.Where("stock_total >= ?", value)
+		case "stock_total_max":
+			query = query.Where("stock_total <= ?", value)
+		case "selling_price_min":
+			query = query.Where("selling_price >= ?", value)
+		case "selling_price_max":
+			query = query.Where("selling_price <= ?", value)
+		case "selling_price_order":
+			if value == "asc" {
+				query = query.Order("selling_price asc")
+			} else if value == "desc" {
+				query = query.Order("selling_price desc")
+			}
+		}
 	}
 
-	return stocksDomain, nil
+	// Execute the query
+	if err := query.Find(&records).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to domain models
+	stocksDomain := make([]admin.StocksDomain, len(records))
+	for i, stock := range records {
+		stocksDomain[i] = stock.ToStocksDomain()
+	}
+
+	// Get the total count of items without pagination
+	var totalItems int64
+	countQuery := sr.conn.Model(&Stocks{}).
+		Joins("LEFT JOIN categories ON categories.id = stocks.category_id").
+		Joins("LEFT JOIN units ON units.id = stocks.unit_id")
+
+	// Apply search and filter conditions for count query
+	if search != "" {
+		countQuery = countQuery.
+			Where("stocks.stock_name LIKE ?", "%"+search+"%").
+			Or("stocks.stock_code LIKE ?", "%"+search+"%").
+			Or("stocks.description LIKE ?", "%"+search+"%").
+			Or("stocks.selling_price LIKE ?", "%"+search+"%").
+			Or("categories.category_name LIKE ?", "%"+search+"%").
+			Or("units.unit_name LIKE ?", "%"+search+"%")
+	}
+
+	for key, value := range filters {
+		switch key {
+		case "category_id":
+			countQuery = countQuery.Where("category_id = ?", value)
+		case "unit_id":
+			countQuery = countQuery.Where("unit_id = ?", value)
+		case "stock_total_min":
+			countQuery = countQuery.Where("stock_total >= ?", value)
+		case "stock_total_max":
+			countQuery = countQuery.Where("stock_total <= ?", value)
+		case "selling_price_min":
+			countQuery = countQuery.Where("selling_price >= ?", value)
+		case "selling_price_max":
+			countQuery = countQuery.Where("selling_price <= ?", value)
+		}
+	}
+
+	countQuery.Count(&totalItems)
+
+	return stocksDomain, int(totalItems), nil
 }
+
+// search by name, search by category gagal, filter, asc ok
+// func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.StocksDomain, int, error) {
+// 	var records []Stocks
+// 	offset := (page - 1) * limit
+
+// 	// Build the base query with pagination and sorting
+// 	query := sr.conn.WithContext(ctx).
+// 		Model(&Stocks{}).
+// 		Preload("Categories").
+// 		Preload("Units").
+// 		Offset(offset).
+// 		Limit(limit).
+// 		Order(fmt.Sprintf("%s %s", sort, order))
+
+// 	// Add search condition if search keyword is provided
+// 	if search != "" {
+// 		query = query.
+// 			Where("stocks.stock_name LIKE ?", "%"+search+"%").
+// 			Or("stocks.stock_code LIKE ?", "%"+search+"%").
+// 			Or("stocks.description LIKE ?", "%"+search+"%").
+// 			Or("stocks.selling_price LIKE ?", "%"+search+"%").
+// 			// Join dengan Categories untuk mencari category_name
+// 			Joins("LEFT JOIN categories ON categories.id = stocks.category_id").
+// 			Where("categories.category_name LIKE ?", "%"+search+"%").
+// 			// Join dengan Units untuk mencari unit_name
+// 			Joins("LEFT JOIN units ON units.id = stocks.unit_id").
+// 			Where("units.unit_name LIKE ?", "%"+search+"%")
+// 	}
+
+// 	// Add filter conditions
+// 	for key, value := range filters {
+// 		switch key {
+// 		case "category_id":
+// 			query = query.Where("category_id = ?", value)
+// 		case "unit_id":
+// 			query = query.Where("unit_id = ?", value)
+// 		case "stock_total_min":
+// 			query = query.Where("stock_total >= ?", value)
+// 		case "stock_total_max":
+// 			query = query.Where("stock_total <= ?", value)
+// 		case "selling_price_min":
+// 			query = query.Where("selling_price >= ?", value)
+// 		case "selling_price_max":
+// 			query = query.Where("selling_price <= ?", value)
+// 		}
+// 	}
+
+// 	// Execute the query
+// 	if err := query.Find(&records).Error; err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	// Convert to domain models
+// 	stocksDomain := make([]admin.StocksDomain, len(records))
+// 	for i, stock := range records {
+// 		stocksDomain[i] = stock.ToStocksDomain()
+// 	}
+
+// 	// Get the total count of items without pagination
+// 	var totalItems int64
+// 	countQuery := sr.conn.Model(&Stocks{})
+
+// 	// Apply search and filter conditions for count query
+// 	if search != "" {
+// 		countQuery = countQuery.
+// 			Where("stock_name LIKE ?", "%"+search+"%").
+// 			Or("stock_code LIKE ?", "%"+search+"%").
+// 			Or("description LIKE ?", "%"+search+"%").
+// 			Or("selling_price LIKE ?", "%"+search+"%").
+// 			Joins("LEFT JOIN categories ON categories.id = stocks.category_id").
+// 			Where("categories.category_name LIKE ?", "%"+search+"%").
+// 			Joins("LEFT JOIN units ON units.id = stocks.unit_id").
+// 			Where("units.unit_name LIKE ?", "%"+search+"%")
+// 	}
+
+// 	for key, value := range filters {
+// 		switch key {
+// 		case "category_id":
+// 			countQuery = countQuery.Where("category_id = ?", value)
+// 		case "unit_id":
+// 			countQuery = countQuery.Where("unit_id = ?", value)
+// 		case "stock_total_min":
+// 			countQuery = countQuery.Where("stock_total >= ?", value)
+// 		case "stock_total_max":
+// 			countQuery = countQuery.Where("stock_total <= ?", value)
+// 		case "selling_price_min":
+// 			countQuery = countQuery.Where("selling_price >= ?", value)
+// 		case "selling_price_max":
+// 			countQuery = countQuery.Where("selling_price <= ?", value)
+// 		}
+// 	}
+
+// 	countQuery.Count(&totalItems)
+
+// 	return stocksDomain, int(totalItems), nil
+// }
+
+// func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]admin.StocksDomain, int, error) {
+// 	var records []Stocks
+// 	offset := (page - 1) * limit
+
+// 	// Build the query with pagination, sorting, and search
+// 	query := sr.conn.WithContext(ctx).Preload("Categories").Preload("Units").
+// 		Offset(offset).Limit(limit).Order(fmt.Sprintf("%s %s", sort, order))
+
+// 	if search != "" {
+// 		query = query.Where("stock_name LIKE ?", "%"+search+"%")
+// 	}
+
+// 	// Execute the query
+// 	if err := query.Find(&records).Error; err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	// Convert to domain models
+// 	stocksDomain := []admin.StocksDomain{}
+// 	for _, stock := range records {
+// 		domain := stock.ToStocksDomain()
+// 		stocksDomain = append(stocksDomain, domain)
+// 	}
+
+// 	// Get the total count of items without pagination
+// 	var totalItems int64
+// 	countQuery := sr.conn.Model(&Stocks{})
+// 	if search != "" {
+// 		countQuery = countQuery.Where("stock_name LIKE ?", "%"+search+"%")
+// 	}
+// 	countQuery.Count(&totalItems)
+
+// 	return stocksDomain, int(totalItems), nil
+// }
+
+// func (sr *adminRepository) StocksGetAll(ctx context.Context) ([]admin.StocksDomain, error) {
+// 	var records []Stocks
+// 	if err := sr.conn.WithContext(ctx).
+// 		Preload("Categories").Preload("Units").
+// 		Find(&records).Error; err != nil {
+// 		return nil, err
+// 	}
+
+// 	stocksDomain := []admin.StocksDomain{}
+
+// 	for _, stocks := range records {
+// 		domain := stocks.ToStocksDomain()
+// 		stocksDomain = append(stocksDomain, domain)
+// 	}
+
+// 	return stocksDomain, nil
+// }
 
 func (pr *adminRepository) PurchasesCreate(ctx context.Context, purchaseDomain *admin.PurchasesDomain) (admin.PurchasesDomain, error) {
 	// var category _dbCategory.Categories
@@ -718,27 +949,157 @@ func (pr *adminRepository) PurchasesGetByID(ctx context.Context, id string) (adm
 
 }
 
-func (sr *adminRepository) PurchasesGetAll(ctx context.Context) ([]admin.PurchasesDomain, error) {
-	// Memuat data Purchases beserta relasi Vendors, Categories, dan Units
+func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.PurchasesDomain, int, error) {
 	var records []Purchases
-	if err := sr.conn.WithContext(ctx).
-		// Preload("Vendors").Preload("Categories").Preload("Units").
-		Preload("Vendors").Preload("Categories").Preload("Units").
-		Find(&records).Error; err != nil {
-		return nil, err
+	offset := (page - 1) * limit
+
+	// Build the base query with pagination, sorting, and preload
+	query := sr.conn.WithContext(ctx).
+		Preload("Vendors").
+		Preload("Categories").
+		Preload("Units").
+		Offset(offset).
+		Limit(limit).
+		Order(fmt.Sprintf("%s %s", sort, order))
+
+	// Add search condition if search keyword is provided
+	if search != "" {
+		query = query.
+			Joins("LEFT JOIN vendors ON vendors.id = purchases.vendor_id").
+			Joins("LEFT JOIN categories ON categories.id = purchases.category_id").
+			Joins("LEFT JOIN units ON units.id = purchases.unit_id").
+			Where("purchases.stock_name LIKE ?", "%"+search+"%").
+			Or("purchases.stock_code LIKE ?", "%"+search+"%").
+			Or("purchases.description LIKE ?", "%"+search+"%").
+			Or("purchases.purchase_price LIKE ?", "%"+search+"%").
+			Or("vendors.vendor_name LIKE ?", "%"+search+"%").
+			Or("categories.category_name LIKE ?", "%"+search+"%").
+			Or("units.unit_name LIKE ?", "%"+search+"%")
 	}
 
-	purchasesDomain := []admin.PurchasesDomain{}
-
-	for _, purchase := range records {
-		// Konversi ke domain
-		domain := purchase.ToPurchasesDomain()
-		// Tambahkan ke hasil
-		purchasesDomain = append(purchasesDomain, domain)
+	// Add filter conditions
+	for key, value := range filters {
+		switch key {
+		case "vendor_id":
+			query = query.Where("vendor_id = ?", value)
+		case "category_id":
+			query = query.Where("category_id = ?", value)
+		case "unit_id":
+			query = query.Where("unit_id = ?", value)
+		case "purchase_price_min":
+			query = query.Where("purchase_price >= ?", value)
+		case "purchase_price_max":
+			query = query.Where("purchase_price <= ?", value)
+		}
 	}
 
-	return purchasesDomain, nil
+	// Execute the query
+	if err := query.Find(&records).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to domain models
+	purchasesDomain := make([]admin.PurchasesDomain, len(records))
+	for i, purchase := range records {
+		purchasesDomain[i] = purchase.ToPurchasesDomain()
+	}
+
+	// Get the total count of items without pagination
+	var totalItems int64
+	countQuery := sr.conn.Model(&Purchases{}).
+		Joins("LEFT JOIN vendors ON vendors.id = purchases.vendor_id").
+		Joins("LEFT JOIN categories ON categories.id = purchases.category_id").
+		Joins("LEFT JOIN units ON units.id = purchases.unit_id")
+
+	// Apply search and filter conditions for count query
+	if search != "" {
+		countQuery = countQuery.
+			Where("purchases.stock_name LIKE ?", "%"+search+"%").
+			Or("purchases.stock_code LIKE ?", "%"+search+"%").
+			Or("purchases.description LIKE ?", "%"+search+"%").
+			Or("purchases.purchase_price LIKE ?", "%"+search+"%").
+			Or("vendors.vendor_name LIKE ?", "%"+search+"%").
+			Or("categories.category_name LIKE ?", "%"+search+"%").
+			Or("units.unit_name LIKE ?", "%"+search+"%")
+	}
+
+	for key, value := range filters {
+		switch key {
+		case "vendor_id":
+			countQuery = countQuery.Where("vendor_id = ?", value)
+		case "category_id":
+			countQuery = countQuery.Where("category_id = ?", value)
+		case "unit_id":
+			countQuery = countQuery.Where("unit_id = ?", value)
+		case "purchase_price_min":
+			countQuery = countQuery.Where("purchase_price >= ?", value)
+		case "purchase_price_max":
+			countQuery = countQuery.Where("purchase_price <= ?", value)
+		}
+	}
+
+	countQuery.Count(&totalItems)
+
+	return purchasesDomain, int(totalItems), nil
 }
+
+// func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]admin.PurchasesDomain, int, error) {
+// 	var records []Purchases
+// 	offset := (page - 1) * limit
+
+// 	// Bangun query dengan paginasi, sorting, dan pencarian
+// 	query := sr.conn.WithContext(ctx).
+// 		Preload("Vendors").Preload("Categories").Preload("Units").
+// 		Offset(offset).Limit(limit).Order(fmt.Sprintf("%s %s", sort, order))
+
+// 	if search != "" {
+// 		query = query.Where("stock_name LIKE ?", "%"+search+"%")
+// 	}
+
+// 	// Eksekusi query
+// 	if err := query.Find(&records).Error; err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	// Konversi ke domain models
+// 	purchasesDomain := []admin.PurchasesDomain{}
+// 	for _, purchase := range records {
+// 		domain := purchase.ToPurchasesDomain()
+// 		purchasesDomain = append(purchasesDomain, domain)
+// 	}
+
+// 	// Dapatkan total item tanpa paginasi
+// 	var totalItems int64
+// 	countQuery := sr.conn.Model(&Purchases{})
+// 	if search != "" {
+// 		countQuery = countQuery.Where("stock_name LIKE ?", "%"+search+"%")
+// 	}
+// 	countQuery.Count(&totalItems)
+
+// 	return purchasesDomain, int(totalItems), nil
+// }
+
+// func (sr *adminRepository) PurchasesGetAll(ctx context.Context) ([]admin.PurchasesDomain, error) {
+// 	// Memuat data Purchases beserta relasi Vendors, Categories, dan Units
+// 	var records []Purchases
+// 	if err := sr.conn.WithContext(ctx).
+// 		// Preload("Vendors").Preload("Categories").Preload("Units").
+// 		Preload("Vendors").Preload("Categories").Preload("Units").
+// 		Find(&records).Error; err != nil {
+// 		return nil, err
+// 	}
+
+// 	purchasesDomain := []admin.PurchasesDomain{}
+
+// 	for _, purchase := range records {
+// 		// Konversi ke domain
+// 		domain := purchase.ToPurchasesDomain()
+// 		// Tambahkan ke hasil
+// 		purchasesDomain = append(purchasesDomain, domain)
+// 	}
+
+// 	return purchasesDomain, nil
+// }
 
 func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admin.CartItemsDomain) (admin.CartItemsDomain, error) {
 	record := FromCartItemsDomain(itemDomain)

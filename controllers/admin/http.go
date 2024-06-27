@@ -267,7 +267,7 @@ func (ctrl *AuthController) AdminGetProfile(c echo.Context) error {
 	// Konversi admin domain ke respons dengan URL gambar lengkap
 	resp := response.FromAdminsDomain(user)
 	if user.ImagePath != "" {
-		resp.ImagePath = fmt.Sprintf("http://192.168.100.91:8080/images/%s", user.ImagePath)
+		resp.ImagePath = fmt.Sprintf("http://192.168.253.91:8080/images/%s", user.ImagePath)
 	}
 	return controllers.NewResponse(c, http.StatusOK, false, "admin info found", resp)
 
@@ -308,7 +308,7 @@ func (ctrl *AuthController) AdminGetByID(c echo.Context) error {
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (pc *AuthController) RoleCreate(c echo.Context) error {
+func (ac *AuthController) RoleCreate(c echo.Context) error {
 	input := request.Role{}
 	ctx := c.Request().Context()
 
@@ -322,7 +322,7 @@ func (pc *AuthController) RoleCreate(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	role, err := pc.authUseCase.RoleCreate(ctx, input.ToRoleDomain())
+	role, err := ac.authUseCase.RoleCreate(ctx, input.ToRoleDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a role", "")
@@ -331,12 +331,12 @@ func (pc *AuthController) RoleCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "role registered", response.FromRoleDomain(role))
 }
 
-func (cc *AuthController) RoleGetByID(c echo.Context) error {
+func (ac *AuthController) RoleGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	roleID := c.Param("id")
 
-	role, err := cc.authUseCase.RoleGetByID(ctx, roleID)
+	role, err := ac.authUseCase.RoleGetByID(ctx, roleID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "role not found", "")
@@ -345,10 +345,10 @@ func (cc *AuthController) RoleGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "role found", response.FromRoleDomain(role))
 }
 
-func (pc *AuthController) RoleGetAll(c echo.Context) error {
+func (ac *AuthController) RoleGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	roleData, err := pc.authUseCase.RoleGetAll(ctx)
+	roleData, err := ac.authUseCase.RoleGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -442,12 +442,12 @@ func (pc *AuthController) RoleGetAll(c echo.Context) error {
 // }
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-func (cc *AuthController) CustomersGetByID(c echo.Context) error {
+func (ac *AuthController) CustomersGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	customersID := c.Param("id")
 
-	customers, err := cc.authUseCase.CustomersGetByID(ctx, customersID)
+	customers, err := ac.authUseCase.CustomersGetByID(ctx, customersID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "customer not found", "")
@@ -456,7 +456,7 @@ func (cc *AuthController) CustomersGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "customer found", response.FromCustomersDomain(customers))
 }
 
-func (cc *AuthController) CustomersCreate(c echo.Context) error {
+func (ac *AuthController) CustomersCreate(c echo.Context) error {
 	input := request.Customers{}
 	ctx := c.Request().Context()
 
@@ -470,7 +470,7 @@ func (cc *AuthController) CustomersCreate(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	customers, err := cc.authUseCase.CustomersCreate(ctx, input.ToCustomersDomain())
+	customers, err := ac.authUseCase.CustomersCreate(ctx, input.ToCustomersDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a customer", "")
@@ -479,10 +479,10 @@ func (cc *AuthController) CustomersCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "customer registered", response.FromCustomersDomain(customers))
 }
 
-func (cc *AuthController) CustomersGetAll(c echo.Context) error {
+func (ac *AuthController) CustomersGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	categoriesData, err := cc.authUseCase.CustomersGetAll(ctx)
+	categoriesData, err := ac.authUseCase.CustomersGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -497,12 +497,12 @@ func (cc *AuthController) CustomersGetAll(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all customers", categories)
 }
 
-func (cc *AuthController) CategoryGetByID(c echo.Context) error {
+func (ac *AuthController) CategoryGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	categoryID := c.Param("id")
 
-	category, err := cc.authUseCase.CategoryGetByID(ctx, categoryID)
+	category, err := ac.authUseCase.CategoryGetByID(ctx, categoryID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "category not found", "")
@@ -511,12 +511,12 @@ func (cc *AuthController) CategoryGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "category found", response.FromCategoryDomain(category))
 }
 
-func (cc *AuthController) CategoryGetByName(c echo.Context) error {
+func (ac *AuthController) CategoryGetByName(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	categoryName := c.Param("category_name")
 
-	category, err := cc.authUseCase.CategoryGetByName(ctx, categoryName)
+	category, err := ac.authUseCase.CategoryGetByName(ctx, categoryName)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "categoryName not found", "")
@@ -525,7 +525,7 @@ func (cc *AuthController) CategoryGetByName(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "categoryName found", response.FromCategoryDomain(category))
 }
 
-func (pc *AuthController) CategoryCreate(c echo.Context) error {
+func (ac *AuthController) CategoryCreate(c echo.Context) error {
 	input := request.Category{}
 	ctx := c.Request().Context()
 
@@ -539,7 +539,7 @@ func (pc *AuthController) CategoryCreate(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	category, err := pc.authUseCase.CategoryCreate(ctx, input.ToCategoriesDomain())
+	category, err := ac.authUseCase.CategoryCreate(ctx, input.ToCategoriesDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a category", "")
@@ -548,10 +548,10 @@ func (pc *AuthController) CategoryCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "category registered", response.FromCategoryDomain(category))
 }
 
-func (pc *AuthController) CategoryGetAll(c echo.Context) error {
+func (ac *AuthController) CategoryGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	categoryData, err := pc.authUseCase.CategoryGetAll(ctx)
+	categoryData, err := ac.authUseCase.CategoryGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -566,7 +566,7 @@ func (pc *AuthController) CategoryGetAll(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all category", categories)
 }
 
-func (pc *AuthController) VendorsCreate(c echo.Context) error {
+func (ac *AuthController) VendorsCreate(c echo.Context) error {
 	input := request.Vendors{}
 	ctx := c.Request().Context()
 
@@ -580,7 +580,7 @@ func (pc *AuthController) VendorsCreate(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	vendors, err := pc.authUseCase.VendorsCreate(ctx, input.ToVendorsDomain())
+	vendors, err := ac.authUseCase.VendorsCreate(ctx, input.ToVendorsDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a vendor", "")
@@ -589,12 +589,12 @@ func (pc *AuthController) VendorsCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "vendor registered", response.FromVendorsDomain(vendors))
 }
 
-func (cc *AuthController) VendorsGetByID(c echo.Context) error {
+func (ac *AuthController) VendorsGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	vendorsID := c.Param("id")
 
-	vendors, err := cc.authUseCase.VendorsGetByID(ctx, vendorsID)
+	vendors, err := ac.authUseCase.VendorsGetByID(ctx, vendorsID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "vendor not found", "")
@@ -603,10 +603,10 @@ func (cc *AuthController) VendorsGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "vendor found", response.FromVendorsDomain(vendors))
 }
 
-func (pc *AuthController) VendorsGetAll(c echo.Context) error {
+func (ac *AuthController) VendorsGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	categoriesData, err := pc.authUseCase.VendorsGetAll(ctx)
+	categoriesData, err := ac.authUseCase.VendorsGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -621,7 +621,7 @@ func (pc *AuthController) VendorsGetAll(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all vendors", categories)
 }
 
-func (pc *AuthController) UnitsCreate(c echo.Context) error {
+func (ac *AuthController) UnitsCreate(c echo.Context) error {
 	input := request.Units{}
 	ctx := c.Request().Context()
 
@@ -635,7 +635,7 @@ func (pc *AuthController) UnitsCreate(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	unit, err := pc.authUseCase.UnitsCreate(ctx, input.ToUnitsDomain())
+	unit, err := ac.authUseCase.UnitsCreate(ctx, input.ToUnitsDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a unit", "")
@@ -644,12 +644,12 @@ func (pc *AuthController) UnitsCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "unit registered", response.FromUnitsDomain(unit))
 }
 
-func (cc *AuthController) UnitsGetByID(c echo.Context) error {
+func (ac *AuthController) UnitsGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	unitsID := c.Param("id")
 
-	unit, err := cc.authUseCase.UnitsGetByID(ctx, unitsID)
+	unit, err := ac.authUseCase.UnitsGetByID(ctx, unitsID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "unit not found", "")
@@ -658,10 +658,10 @@ func (cc *AuthController) UnitsGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "unit found", response.FromUnitsDomain(unit))
 }
 
-func (pc *AuthController) UnitsGetAll(c echo.Context) error {
+func (ac *AuthController) UnitsGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	unitsData, err := pc.authUseCase.UnitsGetAll(ctx)
+	unitsData, err := ac.authUseCase.UnitsGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -676,7 +676,7 @@ func (pc *AuthController) UnitsGetAll(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all units", units)
 }
 
-func (pc *AuthController) PurchasesCreate(c echo.Context) error {
+func (ac *AuthController) PurchasesCreate(c echo.Context) error {
 	input := request.Purchases{}
 	ctx := c.Request().Context()
 
@@ -690,7 +690,7 @@ func (pc *AuthController) PurchasesCreate(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	purchases, err := pc.authUseCase.PurchasesCreate(ctx, input.ToPurchasesDomain())
+	purchases, err := ac.authUseCase.PurchasesCreate(ctx, input.ToPurchasesDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a purchases", "")
@@ -699,12 +699,12 @@ func (pc *AuthController) PurchasesCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "purchases registered", response.FromPurchasesDomain(purchases))
 }
 
-func (cc *AuthController) PurchasesGetByID(c echo.Context) error {
+func (ac *AuthController) PurchasesGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	purchasesID := c.Param("id")
 
-	purchases, err := cc.authUseCase.PurchasesGetByID(ctx, purchasesID)
+	purchases, err := ac.authUseCase.PurchasesGetByID(ctx, purchasesID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "category not found", "")
@@ -713,50 +713,172 @@ func (cc *AuthController) PurchasesGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "category found", response.FromPurchasesDomain(purchases))
 }
 
-func (pc *AuthController) PurchasesGetAll(c echo.Context) error {
+func (ac *AuthController) PurchasesGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// Fetch purchases data from use case
-	purchasesData, err := pc.authUseCase.PurchasesGetAll(ctx)
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	if page <= 0 {
+		page = 1
+	}
+
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit <= 0 {
+		limit = 5
+	}
+
+	sort := c.QueryParam("sort")
+	if sort == "" {
+		sort = "id"
+	}
+
+	order := c.QueryParam("order")
+	if order == "" {
+		order = "asc"
+	}
+
+	search := c.QueryParam("search")
+
+	filters := make(map[string]interface{})
+
+	vendorID, _ := strconv.Atoi(c.QueryParam("vendor_id"))
+	if vendorID != 0 {
+		filters["vendor_id"] = vendorID
+	}
+
+	categoryID, _ := strconv.Atoi(c.QueryParam("category_id"))
+	if categoryID != 0 {
+		filters["category_id"] = categoryID
+	}
+
+	unitID, _ := strconv.Atoi(c.QueryParam("unit_id"))
+	if unitID != 0 {
+		filters["unit_id"] = unitID
+	}
+
+	quantityMin, _ := strconv.Atoi(c.QueryParam("quantity_min"))
+	if quantityMin != 0 {
+		filters["quantity_min"] = quantityMin
+	}
+
+	quantityMax, _ := strconv.Atoi(c.QueryParam("quantity_max"))
+	if quantityMax != 0 {
+		filters["quantity_max"] = quantityMax
+	}
+
+	purchasePriceMin, _ := strconv.Atoi(c.QueryParam("purchase_price_min"))
+	if purchasePriceMin != 0 {
+		filters["purchase_price_min"] = purchasePriceMin
+	}
+
+	purchasePriceMax, _ := strconv.Atoi(c.QueryParam("purchase_price_max"))
+	if purchasePriceMax != 0 {
+		filters["purchase_price_max"] = purchasePriceMax
+	}
+
+	sellingPriceMin, _ := strconv.Atoi(c.QueryParam("selling_price_min"))
+	if sellingPriceMin != 0 {
+		filters["selling_price_min"] = sellingPriceMin
+	}
+
+	sellingPriceMax, _ := strconv.Atoi(c.QueryParam("selling_price_max"))
+	if sellingPriceMax != 0 {
+		filters["selling_price_max"] = sellingPriceMax
+	}
+
+	purchasesData, totalItems, err := ac.authUseCase.PurchasesGetAll(ctx, page, limit, sort, order, search, filters)
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
 	}
 
-	// Convert domain purchases to response purchases
 	purchases := []response.Purchases{}
 	for _, purchase := range purchasesData {
 		purchases = append(purchases, response.FromPurchasesDomain(purchase))
 	}
 
-	// Paginate the purchases data based on query parameters
-	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page == 0 {
-		page = 1 // Default to page 1 if not specified or invalid
-	}
-
-	// Menentukan default item per page yang di tampilkan
-	size, _ := strconv.Atoi(c.QueryParam("size"))
-	if size == 0 {
-		size = 5 // Default to 10 items per page if not specified or invalid
-	}
-	totalItems := len(purchases)
-
-	// Slice data based on pagination parameters
-	paginatedData := utils.Paginate(purchases, page, size)
-
-	// paginatedData, err := utils.Paginate(purchases, page, size)
-	// if err != nil {
-	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, err.Error(), "")
-	// }
-
-	// Prepare paginated response using NewPaginatedResponse
-	return controllers.NewPaginatedResponse(c, http.StatusOK, "All categories", paginatedData, page, size, totalItems)
+	return controllers.NewPaginatedResponse(c, http.StatusOK, "All purchases", purchases, page, limit, totalItems)
 }
 
-// func (pc *AuthController) PurchasesGetAll(c echo.Context) error {
+// func (ac *AuthController) PurchasesGetAll(c echo.Context) error {
 // 	ctx := c.Request().Context()
 
-// 	purchasesData, err := pc.authUseCase.PurchasesGetAll(ctx)
+// 	// Get query parameters for pagination, sorting, and search
+// 	page, err := strconv.Atoi(c.QueryParam("page"))
+// 	if err != nil || page < 1 {
+// 		page = 1
+// 	}
+
+// 	limit, err := strconv.Atoi(c.QueryParam("limit"))
+// 	if err != nil || limit < 1 {
+// 		limit = 10
+// 	}
+
+// 	sort := c.QueryParam("sort")
+// 	if sort == "" {
+// 		sort = "id"
+// 	}
+
+// 	order := c.QueryParam("order")
+// 	if order == "" {
+// 		order = "asc"
+// 	}
+
+// 	search := c.QueryParam("search")
+
+// 	// Call usecase to get purchases data
+// 	purchases, totalItems, err := ac.authUseCase.PurchasesGetAll(ctx, page, limit, sort, order, search)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+// 	}
+
+// 	// Use NewPaginatedResponse to create paginated response
+// 	return controllers.NewPaginatedResponse(c, http.StatusOK, "All purchases", purchases, page, limit, totalItems)
+// }
+
+//////
+// func (ac *AuthController) PurchasesGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	// Fetch purchases data from use case
+// 	purchasesData, err := ac.authUseCase.PurchasesGetAll(ctx)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+// 	}
+
+// 	// Convert domain purchases to response purchases
+// 	purchases := []response.Purchases{}
+// 	for _, purchase := range purchasesData {
+// 		purchases = append(purchases, response.FromPurchasesDomain(purchase))
+// 	}
+
+// 	// Paginate the purchases data based on query parameters
+// 	page, _ := strconv.Atoi(c.QueryParam("page"))
+// 	if page == 0 {
+// 		page = 1 // Default to page 1 if not specified or invalid
+// 	}
+
+// 	// Menentukan default item per page yang di tampilkan
+// 	size, _ := strconv.Atoi(c.QueryParam("size"))
+// 	if size == 0 {
+// 		size = 5 // Default to 10 items per page if not specified or invalid
+// 	}
+// 	totalItems := len(purchases)
+
+// 	// Slice data based on pagination parameters
+// 	paginatedData := utils.Paginate(purchases, page, size)
+
+// 	// paginatedData, err := utils.Paginate(purchases, page, size)
+// 	// if err != nil {
+// 	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, err.Error(), "")
+// 	// }
+
+// 	// Prepare paginated response using NewPaginatedResponse
+// 	return controllers.NewPaginatedResponse(c, http.StatusOK, "All categories", paginatedData, page, size, totalItems)
+// }
+
+// func (ac *AuthController) PurchasesGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	purchasesData, err := ac.authUseCase.PurchasesGetAll(ctx)
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -771,7 +893,7 @@ func (pc *AuthController) PurchasesGetAll(c echo.Context) error {
 // 	return controllers.NewResponse(c, http.StatusOK, false, "all purchases", purchases)
 // }
 
-func (sc *AuthController) StocksCreate(c echo.Context) error {
+func (ac *AuthController) StocksCreate(c echo.Context) error {
 	input := request.Stocks{}
 	ctx := c.Request().Context()
 
@@ -785,7 +907,7 @@ func (sc *AuthController) StocksCreate(c echo.Context) error {
 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	}
 
-	stock, err := sc.authUseCase.StocksCreate(ctx, input.ToStocksDomain())
+	stock, err := ac.authUseCase.StocksCreate(ctx, input.ToStocksDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a stock", "")
@@ -794,12 +916,12 @@ func (sc *AuthController) StocksCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "stock registered", response.FromStocksDomain(stock))
 }
 
-func (cc *AuthController) StocksGetByID(c echo.Context) error {
+func (ac *AuthController) StocksGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	stockID := c.Param("id")
 
-	stock, err := cc.authUseCase.StocksGetByID(ctx, stockID)
+	stock, err := ac.authUseCase.StocksGetByID(ctx, stockID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "category not found", "")
@@ -808,44 +930,155 @@ func (cc *AuthController) StocksGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "category found", response.FromStocksDomain(stock))
 }
 
-func (sc *AuthController) StocksGetAll(c echo.Context) error {
+func (ac *AuthController) StocksGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// Fetch stocks data from use case
-	stocksData, err := sc.authUseCase.StocksGetAll(ctx)
-	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
-		// return controllers.NewPaginatedResponse(c, http.StatusInternalServerError, "failed to fetch data", nil, 1, 10, 0)
-	}
-
-	// Convert domain stocks to response stocks
-	stocks := []response.Stocks{}
-	for _, stock := range stocksData {
-		stocks = append(stocks, response.FromStocksDomain(stock))
-	}
-
-	// Paginate the stocks data based on query parameters
+	// Ambil parameter query untuk pagination, sorting, dan search
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page == 0 {
 		page = 1 // Default to page 1 if not specified or invalid
 	}
 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
 	if limit == 0 {
-		limit = 5 // Default to 10 items per page if not specified or invalid
+		limit = 10 // Default to 10 items per page if not specified or invalid
 	}
-	totalItems := len(stocks)
+	sort := c.QueryParam("sort")
+	if sort == "" {
+		sort = "id" // Default sorting field
+	}
+	order := c.QueryParam("order")
+	if order == "" {
+		order = "asc" // Default order
+	}
+	search := c.QueryParam("search")
 
-	// Slice data based on pagination parameters
-	paginatedData := utils.Paginate(stocks, page, limit)
+	// Example of extracting filters from query params
+	filters := make(map[string]interface{})
+	categoryID, _ := strconv.Atoi(c.QueryParam("category_id"))
+	if categoryID != 0 {
+		filters["category_id"] = categoryID
+	}
+	unitID, _ := strconv.Atoi(c.QueryParam("unit_id"))
+	if unitID != 0 {
+		filters["unit_id"] = unitID
+	}
+	stockTotalMin, _ := strconv.Atoi(c.QueryParam("stock_total_min"))
+	if stockTotalMin != 0 {
+		filters["stock_total_min"] = stockTotalMin
+	}
+	stockTotalMax, _ := strconv.Atoi(c.QueryParam("stock_total_max"))
+	if stockTotalMax != 0 {
+		filters["stock_total_max"] = stockTotalMax
+	}
+	sellingPriceMin, _ := strconv.Atoi(c.QueryParam("selling_price_min"))
+	if sellingPriceMin != 0 {
+		filters["selling_price_min"] = sellingPriceMin
+	}
+	sellingPriceMax, _ := strconv.Atoi(c.QueryParam("selling_price_max"))
+	if sellingPriceMax != 0 {
+		filters["selling_price_max"] = sellingPriceMax
+	}
+	sellingPriceOrder := c.QueryParam("selling_price_order")
+	if sellingPriceOrder != "" {
+		filters["selling_price_order"] = sellingPriceOrder
+	}
+
+	// Fetch stocks data from use case with pagination, sorting, search, and filters
+	stocksData, totalItems, err := ac.authUseCase.StocksGetAll(ctx, page, limit, sort, order, search, filters)
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+	}
+
+	// Convert domain stocks to response stocks
+	stocks := make([]response.Stocks, len(stocksData))
+	for i, stock := range stocksData {
+		stocks[i] = response.FromStocksDomain(stock)
+	}
 
 	// Prepare paginated response using NewPaginatedResponse
-	return controllers.NewPaginatedResponse(c, http.StatusOK, "All stocks", paginatedData, page, limit, totalItems)
+	return controllers.NewPaginatedResponse(c, http.StatusOK, "Stocks retrieved successfully", stocks, page, limit, totalItems)
 }
 
-// func (sc *AuthController) StocksGetAll(c echo.Context) error {
+// func (ac *AuthController) StocksGetAll(c echo.Context) error {
 // 	ctx := c.Request().Context()
 
-// 	stocksData, err := sc.authUseCase.StocksGetAll(ctx)
+// 	// Ambil parameter query untuk pagination, sorting, dan search
+// 	page, _ := strconv.Atoi(c.QueryParam("page"))
+// 	if page == 0 {
+// 		page = 1 // Default to page 1 if not specified or invalid
+// 	}
+// 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+// 	if limit == 0 {
+// 		limit = 5 // Default to 5 items per page if not specified or invalid
+// 	}
+// 	sort := c.QueryParam("sort")
+// 	if sort == "" {
+// 		sort = "id" // Default sorting field
+// 	}
+// 	order := c.QueryParam("order")
+// 	if order == "" {
+// 		order = "asc" // Default order
+// 	}
+// 	search := c.QueryParam("search")
+
+// 	// Fetch stocks data from use case with pagination, sorting, and search
+// 	stocksData, totalItems, err := ac.authUseCase.StocksGetAll(ctx, page, limit, sort, order, search)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+// 	}
+
+// 	// Convert domain stocks to response stocks
+// 	stocks := []response.Stocks{}
+// 	for _, stock := range stocksData {
+// 		stocks = append(stocks, response.FromStocksDomain(stock))
+// 	}
+
+// 	// Calculate total pages
+// 	// totalPages := (totalItems + limit - 1) / limit
+
+// 	// Prepare paginated response using NewPaginatedResponse
+// 	return controllers.NewPaginatedResponse(c, http.StatusOK, "All stocks", stocks, page, limit, totalItems)
+// 	// return controllers.NewPaginatedResponse(c, http.StatusOK, "All stocks", stocks, page, limit, totalPages, totalItems)
+// }
+
+// func (ac *AuthController) StocksGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	// Fetch stocks data from use case
+// 	stocksData, err := ac.authUseCase.StocksGetAll(ctx)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+// 		// return controllers.NewPaginatedResponse(c, http.StatusInternalServerError, "failed to fetch data", nil, 1, 10, 0)
+// 	}
+
+// 	// Convert domain stocks to response stocks
+// 	stocks := []response.Stocks{}
+// 	for _, stock := range stocksData {
+// 		stocks = append(stocks, response.FromStocksDomain(stock))
+// 	}
+
+// 	// Paginate the stocks data based on query parameters
+// 	page, _ := strconv.Atoi(c.QueryParam("page"))
+// 	if page == 0 {
+// 		page = 1 // Default to page 1 if not specified or invalid
+// 	}
+// 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+// 	if limit == 0 {
+// 		limit = 5 // Default to 10 items per page if not specified or invalid
+// 	}
+// 	totalItems := len(stocks)
+
+// 	// Slice data based on pagination parameters
+// 	paginatedData := utils.Paginate(stocks, page, limit)
+
+// 	// Prepare paginated response using NewPaginatedResponse
+// 	return controllers.NewPaginatedResponse(c, http.StatusOK, "All stocks", paginatedData, page, limit, totalItems)
+// }
+
+// func (ac *AuthController) StocksGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	stocksData, err := ac.authUseCase.StocksGetAll(ctx)
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -860,7 +1093,7 @@ func (sc *AuthController) StocksGetAll(c echo.Context) error {
 // 	return controllers.NewResponse(c, http.StatusOK, false, "all categories", categories)
 // }
 
-func (sc *AuthController) CartItemsCreate(c echo.Context) error {
+func (ac *AuthController) CartItemsCreate(c echo.Context) error {
 	input := request.CartItems{}
 	ctx := c.Request().Context()
 
@@ -874,7 +1107,7 @@ func (sc *AuthController) CartItemsCreate(c echo.Context) error {
 	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 	// }
 
-	items, err := sc.authUseCase.CartItemsCreate(ctx, input.ToCartItemsDomain())
+	items, err := ac.authUseCase.CartItemsCreate(ctx, input.ToCartItemsDomain())
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a items", "")
@@ -883,12 +1116,12 @@ func (sc *AuthController) CartItemsCreate(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusCreated, false, "items registered", response.FromCartItemsDomain(items))
 }
 
-func (sc *AuthController) CartItemsGetByID(c echo.Context) error {
+func (ac *AuthController) CartItemsGetByID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	itemsID := c.Param("id")
 
-	items, err := sc.authUseCase.CartItemsGetByID(ctx, itemsID)
+	items, err := ac.authUseCase.CartItemsGetByID(ctx, itemsID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "items not found", "")
@@ -897,12 +1130,12 @@ func (sc *AuthController) CartItemsGetByID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "items found", response.FromCartItemsDomain(items))
 }
 
-func (sc *AuthController) CartItemsGetAllByCustomerID(c echo.Context) error {
+func (ac *AuthController) CartItemsGetAllByCustomerID(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	customerID := c.Param("customer_id")
 
-	cartitems, err := sc.authUseCase.CartItemsGetAllByCustomerID(ctx, customerID)
+	cartitems, err := ac.authUseCase.CartItemsGetAllByCustomerID(ctx, customerID)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusNotFound, true, "items not found", "")
@@ -917,12 +1150,12 @@ func (sc *AuthController) CartItemsGetAllByCustomerID(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all cartItems", cartItemsResponse)
 }
 
-// func (sc *AuthController) CartItemsGetByCustomerID(c echo.Context) error {
+// func (ac *AuthController) CartItemsGetByCustomerID(c echo.Context) error {
 // 	ctx := c.Request().Context()
 
 // 	customerID := c.Param("customer_id")
 
-// 	cartitems, err := sc.authUseCase.CartItemsGetByCustomerID(ctx, customerID)
+// 	cartitems, err := ac.authUseCase.CartItemsGetByCustomerID(ctx, customerID)
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusNotFound, true, "items not found", "")
@@ -937,10 +1170,10 @@ func (sc *AuthController) CartItemsGetAllByCustomerID(c echo.Context) error {
 // 	return controllers.NewResponse(c, http.StatusOK, false, "all cartItems", cartItemsResponse)
 // }
 
-func (sc *AuthController) CartItemsGetAll(c echo.Context) error {
+func (ac *AuthController) CartItemsGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	itemsData, err := sc.authUseCase.CartItemsGetAll(ctx)
+	itemsData, err := ac.authUseCase.CartItemsGetAll(ctx)
 
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -955,11 +1188,11 @@ func (sc *AuthController) CartItemsGetAll(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all items", itemsResponse)
 }
 
-func (sc *AuthController) CartItemsDelete(c echo.Context) error {
+func (ac *AuthController) CartItemsDelete(c echo.Context) error {
 	categoryID := c.Param("id")
 	ctx := c.Request().Context()
 
-	err := sc.authUseCase.CartItemsDelete(ctx, categoryID)
+	err := ac.authUseCase.CartItemsDelete(ctx, categoryID)
 
 	if err != nil {
 		return controllers.NewResponseWithoutData(c, http.StatusInternalServerError, false, "failed to delete a items")
@@ -968,12 +1201,12 @@ func (sc *AuthController) CartItemsDelete(c echo.Context) error {
 	return controllers.NewResponseWithoutData(c, http.StatusOK, false, "items deleted")
 }
 
-func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
+func (ac *AuthController) ItemTransactionsCreate(c echo.Context) error {
 	customerID := c.Param("customer_id") // Ambil customer_id dari parameter URL
 	ctx := c.Request().Context()
 
 	// Panggil use case untuk memproses transaksi berdasarkan customerID
-	_, err := sc.authUseCase.ItemTransactionsCreate(ctx, customerID)
+	_, err := ac.authUseCase.ItemTransactionsCreate(ctx, customerID)
 
 	if err != nil {
 		log.Printf("Error creating item transactions for customer ID %s: %v\n", customerID, err)
@@ -984,7 +1217,7 @@ func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
 	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "successfully created item transactions")
 }
 
-// func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
+// func (ac *AuthController) ItemTransactionsCreate(c echo.Context) error {
 // 	historyID := c.Param("customer_id")
 // 	input := request.ItemTransactions{}
 // 	ctx := c.Request().Context()
@@ -999,8 +1232,8 @@ func (sc *AuthController) ItemTransactionsCreate(c echo.Context) error {
 // 		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 // 	}
 
-// 	// history, err := sc.salesUseCase.ToHistory(ctx, input.ToDomain(), historyID)
-// 	_, err = sc.authUseCase.ItemTransactionsCreate(ctx, input.ToItemTransactionsDomain(), historyID)
+// 	// history, err := ac.salesUseCase.ToHistory(ctx, input.ToDomain(), historyID)
+// 	_, err = ac.authUseCase.ItemTransactionsCreate(ctx, input.ToItemTransactionsDomain(), historyID)
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Missing item transactions data", "")
@@ -1030,7 +1263,7 @@ func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
 	return controllers.NewResponse(c, http.StatusOK, false, "all item transactions", histories)
 }
 
-// func (sc *AuthController) CartsCreate(c echo.Context) error {
+// func (ac *AuthController) CartsCreate(c echo.Context) error {
 // 	input := request.Carts{}
 // 	ctx := c.Request().Context()
 
@@ -1044,7 +1277,7 @@ func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
 // 	// 	return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
 // 	// }
 
-// 	items, err := sc.authUseCase.CartsCreate(ctx, input.ToCartsDomain())
+// 	items, err := ac.authUseCase.CartsCreate(ctx, input.ToCartsDomain())
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a cart", "")
@@ -1053,12 +1286,12 @@ func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
 // 	return controllers.NewResponse(c, http.StatusCreated, false, "cart registered", response.FromCartsDomain(items))
 // }
 
-// func (sc *AuthController) CartsGetByID(c echo.Context) error {
+// func (ac *AuthController) CartsGetByID(c echo.Context) error {
 // 	ctx := c.Request().Context()
 
 // 	itemsID := c.Param("id")
 
-// 	items, err := sc.authUseCase.CartsGetByID(ctx, itemsID)
+// 	items, err := ac.authUseCase.CartsGetByID(ctx, itemsID)
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusNotFound, true, "cart not found", "")
@@ -1067,10 +1300,10 @@ func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
 // 	return controllers.NewResponse(c, http.StatusOK, false, "cart found", response.FromCartsDomain(items))
 // }
 
-// func (sc *AuthController) CartsGetAll(c echo.Context) error {
+// func (ac *AuthController) CartsGetAll(c echo.Context) error {
 // 	ctx := c.Request().Context()
 
-// 	itemsData, err := sc.authUseCase.CartsGetAll(ctx)
+// 	itemsData, err := ac.authUseCase.CartsGetAll(ctx)
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
@@ -1085,11 +1318,11 @@ func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
 // 	return controllers.NewResponse(c, http.StatusOK, false, "all cart", itemsResponse)
 // }
 
-// func (sc *AuthController) CartsDelete(c echo.Context) error {
+// func (ac *AuthController) CartsDelete(c echo.Context) error {
 // 	categoryID := c.Param("id")
 // 	ctx := c.Request().Context()
 
-// 	err := sc.authUseCase.CartsDelete(ctx, categoryID)
+// 	err := ac.authUseCase.CartsDelete(ctx, categoryID)
 
 // 	if err != nil {
 // 		return controllers.NewResponse(c, http.StatusInternalServerError, false, "failed to delete a cart", "")

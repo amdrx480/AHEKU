@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/labstack/echo/v4"
 	// "backend-golang/controllers/users/response"
 	// "backend-golang/controllers/admin/response"
@@ -32,18 +29,19 @@ type ResponseWithoutData struct {
 
 // ////////////////////
 // PaginatedResponse is a generic structure for paginated responses
-type Pagination struct {
+type PaginationResponse struct {
 	CurrentPage int `json:"current_page"`
-	PageSize    int `json:"page_size"`
+	PageLimit   int `json:"page_limit"`
 	TotalPages  int `json:"total_pages"`
 	TotalItems  int `json:"total_items"`
 }
 
-type PaginationResponse[T any] struct {
-	Error      bool       `json:"error"`
-	Message    string     `json:"message"`
-	Data       T          `json:"data"`
-	Pagination Pagination `json:"pagination,omitempty"`
+type PaginatedResponse[T any] struct {
+	// type PaginationResponse[T any] struct {
+	Error      bool               `json:"error"`
+	Message    string             `json:"message"`
+	Data       T                  `json:"data"`
+	Pagination PaginationResponse `json:"pagination,omitempty"`
 }
 
 ////////////////////////
@@ -73,51 +71,84 @@ func NewResponseWithoutData(c echo.Context, statusCode int, statusError bool, me
 	})
 }
 
-// ////////////////////////
-// NewPaginatedResponse creates a new paginated response
-func NewPaginatedResponse[T any](c echo.Context, statusCode int, message string, data T, currentPage int, pageSize int, totalItems int) error {
-	var pagination Pagination
-
-	if currentPage < 1 {
-		currentPage = 1
-	}
-
-	if pageSize < 1 {
-		pageSize = 5 // Default page size
-	}
-
-	totalPages := (totalItems + pageSize - 1) / pageSize
-
-	if currentPage > totalPages {
-		errorMessage := fmt.Sprintf("Invalid page number. Current page: %d, Total pages: %d", currentPage, totalPages)
-		return c.JSON(http.StatusBadRequest, PaginationResponse[T]{
-			Error:   true,
-			Message: errorMessage,
-			Data:    data,
-			Pagination: Pagination{
-				CurrentPage: currentPage,
-				PageSize:    pageSize,
-				TotalPages:  totalPages,
-				TotalItems:  totalItems,
-			},
-		})
-	}
-
-	pagination = Pagination{
-		CurrentPage: currentPage,
-		PageSize:    pageSize,
+func NewPaginatedResponse[T any](c echo.Context, statusCode int, message string, data T, page int, limit int, totalItems int) error {
+	totalPages := (totalItems + limit - 1) / limit
+	pagination := PaginationResponse{
+		CurrentPage: page,
+		PageLimit:   limit,
 		TotalPages:  totalPages,
 		TotalItems:  totalItems,
 	}
 
-	return c.JSON(statusCode, PaginationResponse[T]{
+	response := PaginatedResponse[T]{
 		Error:      false,
 		Message:    message,
 		Data:       data,
 		Pagination: pagination,
-	})
+	}
+
+	return c.JSON(statusCode, response)
 }
 
+// func NewPaginatedResponse[T any](c echo.Context, statusCode int, message string, data T, page int, limit int, totalPages int, totalItems int) error {
+// 	return c.JSON(statusCode, PaginatedResponse[T]{
+// 		Error:   false,
+// 		Message: message,
+// 		Data:    data,
+// 		Pagination: Pagination{
+// 			CurrentPage: page,
+// 			PageLimit:   limit,
+// 			TotalPages:  totalPages,
+// 			TotalItems:  totalItems,
+// 		},
+// 	})
+// }
+
+// ////////////////////////
+// NewPaginatedResponse creates a new paginated response
+// func NewPaginatedResponse[T any](c echo.Context, statusCode int, message string, data T, currentPage int, pageSize int, totalItems int) error {
+// 	var pagination Pagination
+
+// 	if currentPage < 1 {
+// 		currentPage = 1
+// 	}
+
+// 	if pageSize < 1 {
+// 		pageSize = 5 // Default page size
+// 	}
+
+// 	totalPages := (totalItems + pageSize - 1) / pageSize
+
+// 	if currentPage > totalPages {
+// 		errorMessage := fmt.Sprintf("Invalid page number. Current page: %d, Total pages: %d", currentPage, totalPages)
+// 		return c.JSON(http.StatusBadRequest, PaginationResponse[T]{
+// 			Error:   true,
+// 			Message: errorMessage,
+// 			Data:    data,
+// 			Pagination: Pagination{
+// 				CurrentPage: currentPage,
+// 				PageSize:    pageSize,
+// 				TotalPages:  totalPages,
+// 				TotalItems:  totalItems,
+// 			},
+// 		})
+// 	}
+
+// 	pagination = Pagination{
+// 		CurrentPage: currentPage,
+// 		PageSize:    pageSize,
+// 		TotalPages:  totalPages,
+// 		TotalItems:  totalItems,
+// 	}
+
+// 	return c.JSON(statusCode, PaginationResponse[T]{
+// 		Error:      false,
+// 		Message:    message,
+// 		Data:       data,
+// 		Pagination: pagination,
+// 	})
+// }
+/////////////////
 // func NewPaginatedResponse[T any](c echo.Context, statusCode int, message string, data T, currentPage int, pageSize int, totalItems int) error {
 // 	totalPages := (totalItems + pageSize - 1) / pageSize // Calculate total pages
 

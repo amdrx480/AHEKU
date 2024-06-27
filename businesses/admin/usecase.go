@@ -164,9 +164,28 @@ func (usecase *adminUsecase) StocksGetByID(ctx context.Context, id string) (Stoc
 	return usecase.adminRepository.StocksGetByID(ctx, id)
 }
 
-func (usecase *adminUsecase) StocksGetAll(ctx context.Context) ([]StocksDomain, error) {
-	return usecase.adminRepository.StocksGetAll(ctx)
+func (su *adminUsecase) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]StocksDomain, int, error) {
+	stocksDomain, totalItems, err := su.adminRepository.StocksGetAll(ctx, page, limit, sort, order, search, filters)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Implement business logic if needed
+
+	return stocksDomain, totalItems, nil
 }
+
+// func (usecase *adminUsecase) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]StocksDomain, int, error) {
+// 	stocks, totalItems, err := usecase.adminRepository.StocksGetAll(ctx, page, limit, sort, order, search)
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+// 	return stocks, totalItems, nil
+// }
+
+// func (usecase *adminUsecase) StocksGetAll(ctx context.Context) ([]StocksDomain, error) {
+// 	return usecase.adminRepository.StocksGetAll(ctx)
+// }
 
 func (usecase *adminUsecase) PurchasesCreate(ctx context.Context, purchasesDomain *PurchasesDomain) (PurchasesDomain, error) {
 	return usecase.adminRepository.PurchasesCreate(ctx, purchasesDomain)
@@ -176,9 +195,33 @@ func (usecase *adminUsecase) PurchasesGetByID(ctx context.Context, id string) (P
 	return usecase.adminRepository.PurchasesGetByID(ctx, id)
 }
 
-func (usecase *adminUsecase) PurchasesGetAll(ctx context.Context) ([]PurchasesDomain, error) {
-	return usecase.adminRepository.PurchasesGetAll(ctx)
+func (usecase *adminUsecase) PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]PurchasesDomain, int, error) {
+	// Validasi parameter input
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	if sort == "" {
+		sort = "id"
+	}
+	if order == "" {
+		order = "asc"
+	}
+
+	// Panggil repository untuk mendapatkan data pembelian
+	purchases, total, err := usecase.adminRepository.PurchasesGetAll(ctx, page, limit, sort, order, search, filters)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return purchases, total, nil
 }
+
+// func (usecase *adminUsecase) PurchasesGetAll(ctx context.Context) ([]PurchasesDomain, error) {
+// 	return usecase.adminRepository.PurchasesGetAll(ctx)
+// }
 
 func (usecase *adminUsecase) CartItemsGetByID(ctx context.Context, id string) (CartItemsDomain, error) {
 	return usecase.adminRepository.CartItemsGetByID(ctx, id)

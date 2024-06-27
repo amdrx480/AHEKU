@@ -212,12 +212,15 @@ type Usecase interface {
 	// Stocks
 	StocksCreate(ctx context.Context, stocksDomain *StocksDomain) (StocksDomain, error)
 	StocksGetByID(ctx context.Context, id string) (StocksDomain, error)
-	StocksGetAll(ctx context.Context) ([]StocksDomain, error)
+	StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]StocksDomain, int, error)
+	// StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]StocksDomain, int, error)
+	// StocksGetAll(ctx context.Context) ([]StocksDomain, error)
 
 	// Purchases
 	PurchasesGetByID(ctx context.Context, id string) (PurchasesDomain, error)
 	PurchasesCreate(ctx context.Context, purchasesDomain *PurchasesDomain) (PurchasesDomain, error)
-	PurchasesGetAll(ctx context.Context) ([]PurchasesDomain, error)
+	PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]PurchasesDomain, int, error)
+	// PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]PurchasesDomain, int, error)
 
 	// CartItems
 	CartItemsCreate(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error)
@@ -282,12 +285,15 @@ type Repository interface {
 	// Stocks
 	StocksCreate(ctx context.Context, stocksDomain *StocksDomain) (StocksDomain, error)
 	StocksGetByID(ctx context.Context, id string) (StocksDomain, error)
-	StocksGetAll(ctx context.Context) ([]StocksDomain, error)
+	StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]StocksDomain, int, error)
+	// StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]StocksDomain, int, error)
+	// StocksGetAll(ctx context.Context) ([]StocksDomain, error)
 
 	// Purchases
 	PurchasesGetByID(ctx context.Context, id string) (PurchasesDomain, error)
 	PurchasesCreate(ctx context.Context, purchasesDomain *PurchasesDomain) (PurchasesDomain, error)
-	PurchasesGetAll(ctx context.Context) ([]PurchasesDomain, error)
+	PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]PurchasesDomain, int, error)
+	// PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]PurchasesDomain, int, error)
 
 	// CartItems
 	CartItemsCreate(ctx context.Context, cartItemsDomain *CartItemsDomain) (CartItemsDomain, error)
