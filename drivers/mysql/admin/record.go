@@ -109,19 +109,18 @@ type Purchases struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 	//Preload Memuat data Dari isi Nama Tabel Struck
-	Vendors    Vendors    `json:"-" gorm:"foreignKey:VendorID"`
-	VendorID   uint       `json:"vendor_id"`
-	StockName  string     `json:"stock_name"`
-	StockCode  string     `json:"stock_code"`
-	Categories Categories `json:"-" gorm:"foreignKey:CategoryID"`
-	CategoryID uint       `json:"category_id"`
-	Units      Units      `gorm:"foreignKey:UnitID"`
-	UnitID     uint       `json:"unit_id"`
-	// UnitName      string     `json:"unit_name"`
-	Description   string `json:"description"`
-	Quantity      int    `json:"quantity"`
-	PurchasePrice int    `json:"purchase_price"`
-	SellingPrice  int    `json:"selling_price"`
+	Vendors       Vendors    `json:"-" gorm:"foreignKey:VendorID"`
+	VendorID      uint       `json:"vendor_id"`
+	StockName     string     `json:"stock_name"`
+	StockCode     string     `json:"stock_code"`
+	Categories    Categories `json:"-" gorm:"foreignKey:CategoryID"`
+	CategoryID    uint       `json:"category_id"`
+	Units         Units      `gorm:"foreignKey:UnitID"`
+	UnitID        uint       `json:"unit_id"`
+	Description   string     `json:"description"`
+	Quantity      int        `json:"quantity"`
+	PurchasePrice int        `json:"purchase_price"`
+	SellingPrice  int        `json:"selling_price"`
 }
 
 type CartItems struct {

@@ -653,12 +653,16 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 			query = query.Where("selling_price >= ?", value)
 		case "selling_price_max":
 			query = query.Where("selling_price <= ?", value)
-		case "selling_price_order":
-			if value == "asc" {
-				query = query.Order("selling_price asc")
-			} else if value == "desc" {
-				query = query.Order("selling_price desc")
-			}
+		case "category_name":
+			// Filter for multiple category names
+			categoryName := value.([]string)
+			query = query.Joins("LEFT JOIN categories ON categories.id = stocks.category_id").
+				Where("categories.category_name IN (?)", categoryName)
+		case "unit_name":
+			// Filter for multiple unit names
+			unitName := value.([]string)
+			query = query.Joins("LEFT JOIN units ON units.id = stocks.unit_id").
+				Where("units.unit_name IN (?)", unitName)
 		}
 	}
 
@@ -704,6 +708,16 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 			countQuery = countQuery.Where("selling_price >= ?", value)
 		case "selling_price_max":
 			countQuery = countQuery.Where("selling_price <= ?", value)
+		case "category_name":
+			// Filter for multiple category names
+			categoryName := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN categories ON categories.id = stocks.category_id").
+				Where("categories.category_name IN (?)", categoryName)
+		case "unit_name":
+			// Filter for multiple unit names
+			unitName := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN units ON units.id = stocks.unit_id").
+				Where("units.unit_name IN (?)", unitName)
 		}
 	}
 
@@ -990,6 +1004,18 @@ func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit 
 			query = query.Where("purchase_price >= ?", value)
 		case "purchase_price_max":
 			query = query.Where("purchase_price <= ?", value)
+		case "category_name":
+			categoryNames := value.([]string)
+			query = query.Joins("LEFT JOIN categories ON categories.id = purchases.category_id").
+				Where("categories.category_name IN (?)", categoryNames)
+		case "unit_name":
+			unitNames := value.([]string)
+			query = query.Joins("LEFT JOIN units ON units.id = purchases.unit_id").
+				Where("units.unit_name IN (?)", unitNames)
+		case "vendor_name":
+			vendorNames := value.([]string)
+			query = query.Joins("LEFT JOIN vendors ON vendors.id = purchases.vendor_id").
+				Where("vendors.vendor_name IN (?)", vendorNames)
 		}
 	}
 
@@ -1035,6 +1061,18 @@ func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit 
 			countQuery = countQuery.Where("purchase_price >= ?", value)
 		case "purchase_price_max":
 			countQuery = countQuery.Where("purchase_price <= ?", value)
+		case "category_name":
+			categoryNames := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN categories ON categories.id = purchases.category_id").
+				Where("categories.category_name IN (?)", categoryNames)
+		case "unit_name":
+			unitNames := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN units ON units.id = purchases.unit_id").
+				Where("units.unit_name IN (?)", unitNames)
+		case "vendor_name":
+			vendorNames := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN vendors ON vendors.id = purchases.vendor_id").
+				Where("vendors.vendor_name IN (?)", vendorNames)
 		}
 	}
 
@@ -1402,6 +1440,8 @@ func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, customerI
 		itemTransactionsRecord := ItemTransactions{
 			CustomerID: cartItems.CustomerID,
 			StockID:    cartItems.StockID,
+			CategoryID: stock.CategoryID, // Gunakan CategoryID dari Stocks
+			UnitID:     stock.UnitID,     // Gunakan UnitID dari Stocks
 			Quantity:   cartItems.Quantity,
 			Price:      cartItems.Price,
 			SubTotal:   cartItems.SubTotal,

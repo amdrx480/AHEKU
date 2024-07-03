@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -267,7 +268,7 @@ func (ctrl *AuthController) AdminGetProfile(c echo.Context) error {
 	// Konversi admin domain ke respons dengan URL gambar lengkap
 	resp := response.FromAdminsDomain(user)
 	if user.ImagePath != "" {
-		resp.ImagePath = fmt.Sprintf("http://192.168.253.91:8080/images/%s", user.ImagePath)
+		resp.ImagePath = fmt.Sprintf("http://192.168.43.91:8080/images/%s", user.ImagePath)
 	}
 	return controllers.NewResponse(c, http.StatusOK, false, "admin info found", resp)
 
@@ -723,7 +724,7 @@ func (ac *AuthController) PurchasesGetAll(c echo.Context) error {
 
 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
 	if limit <= 0 {
-		limit = 5
+		limit = 10
 	}
 
 	sort := c.QueryParam("sort")
@@ -784,17 +785,32 @@ func (ac *AuthController) PurchasesGetAll(c echo.Context) error {
 	if sellingPriceMax != 0 {
 		filters["selling_price_max"] = sellingPriceMax
 	}
+	categoryNames := c.QueryParam("category_names")
+	if categoryNames != "" {
+		filters["category_name"] = strings.Split(categoryNames, ",")
+	}
+	unitNames := c.QueryParam("unit_names")
+	if unitNames != "" {
+		filters["unit_name"] = strings.Split(unitNames, ",")
+	}
+	vendorNames := c.QueryParam("vendor_names")
+	if vendorNames != "" {
+		filters["vendor_name"] = strings.Split(vendorNames, ",")
+	}
 
+	// Fetch purchases data from use case with pagination, sorting, search, and filters
 	purchasesData, totalItems, err := ac.authUseCase.PurchasesGetAll(ctx, page, limit, sort, order, search, filters)
 	if err != nil {
 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
 	}
 
-	purchases := []response.Purchases{}
-	for _, purchase := range purchasesData {
-		purchases = append(purchases, response.FromPurchasesDomain(purchase))
+	// Convert domain purchases to response purchases
+	purchases := make([]response.Purchases, len(purchasesData))
+	for i, purchase := range purchasesData {
+		purchases[i] = response.FromPurchasesDomain(purchase)
 	}
 
+	// Prepare paginated response using NewPaginatedResponse
 	return controllers.NewPaginatedResponse(c, http.StatusOK, "All purchases", purchases, page, limit, totalItems)
 }
 
@@ -978,10 +994,27 @@ func (ac *AuthController) StocksGetAll(c echo.Context) error {
 	if sellingPriceMax != 0 {
 		filters["selling_price_max"] = sellingPriceMax
 	}
-	sellingPriceOrder := c.QueryParam("selling_price_order")
-	if sellingPriceOrder != "" {
-		filters["selling_price_order"] = sellingPriceOrder
+	categoryName := c.QueryParam("category_name")
+	if categoryName != "" {
+		filters["category_name"] = strings.Split(categoryName, ",")
 	}
+	unitName := c.QueryParam("unit_name")
+	if unitName != "" {
+		filters["unit_name"] = strings.Split(unitName, ",")
+	}
+
+	// categoryName := c.QueryParam("category_name")
+	// if categoryName != "" {
+	// 	// filters["category_name"] = categoryName
+	// 	categoryNameEncoded := url.QueryEscape(categoryName)
+	// 	filters["category_name"] = strings.Split(categoryNameEncoded, ",")
+	// }
+	// unitName := c.QueryParam("unit_name")
+	// if unitName != "" {
+	// 	// filters["unit_name"] = unitName
+	// 	unitNameEncoded := url.QueryEscape(unitName)
+	// 	filters["unit_name"] = strings.Split(unitNameEncoded, ",")
+	// }
 
 	// Fetch stocks data from use case with pagination, sorting, search, and filters
 	stocksData, totalItems, err := ac.authUseCase.StocksGetAll(ctx, page, limit, sort, order, search, filters)
