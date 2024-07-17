@@ -39,7 +39,8 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	admin.Use(echojwt.WithConfig(cl.JWTMiddleware))
 	// admin.Use(middlewares.VerifyToken)
 	admin.POST("/voucher", cl.AdminController.AdminVoucher)
-	admin.PUT("/profile", cl.AdminController.AdminProfileUpdate)
+	// admin.PUT("/profile", cl.AdminController.AdminProfileUpdate)
+	admin.POST("/profile", cl.AdminController.AdminProfileUpdate)
 	admin.GET("/profile", cl.AdminController.AdminGetProfile)
 	admin.GET("/:id", cl.AdminController.AdminGetByID)
 
@@ -64,6 +65,18 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	customers.POST("", cl.AdminController.CustomersCreate)
 	customers.GET("/:id", cl.AdminController.CustomersGetByID)
 	customers.GET("", cl.AdminController.CustomersGetAll)
+	customers.GET("/:id", cl.AdminController.CustomerDelete)
+
+	// Packagin gOfficer routes
+	packagingOfficer := e.Group("/packaging_officer")
+	// customers.Use(echojwt.WithConfig(cl.JWTMiddleware))
+	// customers.Use(middlewares.VerifyToken)
+	// customers.Use(middlewares.RBAC(2))
+	// customers.Use(middlewares.RBAC("admin"))
+
+	packagingOfficer.POST("", cl.AdminController.PackagingOfficerCreate)
+	packagingOfficer.GET("/:id", cl.AdminController.PackagingOfficerGetByID)
+	packagingOfficer.GET("", cl.AdminController.PackagingOfficerGetAll)
 
 	// Categories routes
 	categories := e.Group("/categories")
@@ -109,6 +122,7 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	stocks.GET("/:id", cl.AdminController.StocksGetByID)
 	stocks.POST("", cl.AdminController.StocksCreate)
 	stocks.GET("", cl.AdminController.StocksGetAll)
+	stocks.GET("/export", cl.AdminController.StocksExportToExcel)
 
 	// Purchases routes
 	purchases := e.Group("/purchases")
@@ -142,6 +156,7 @@ func (cl *ControllerList) RegisterRoutes(e *echo.Echo) {
 	// itemTransactions.Use(middlewares.RBAC("admin"))
 
 	itemTransactions.POST("/:customer_id", cl.AdminController.ItemTransactionsCreate)
+	itemTransactions.POST("/reminder_purchase_order/:customer_id", cl.AdminController.ReminderPurchaseOrderCreate)
 	itemTransactions.GET("", cl.AdminController.ItemTransactionsGetAll)
 }
 

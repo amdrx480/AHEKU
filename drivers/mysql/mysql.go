@@ -43,7 +43,8 @@ func (config *DBConfig) InitDB() *gorm.DB {
 
 func MigrateDB(db *gorm.DB) {
 	// err := db.AutoMigrate(&admin.Admin{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{}, &admin.Carts{})
-	err := db.AutoMigrate(&admin.Admin{}, &admin.Role{}, &admin.Customers{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{}, &admin.ItemTransactions{})
+	err := db.AutoMigrate(&admin.Admin{}, &admin.Role{}, &admin.Customers{}, &admin.PackagingOfficer{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{}, &admin.ItemTransactions{}, &admin.ReminderPurchaseOrder{})
+	// err := db.AutoMigrate(&admin.Admin{}, &admin.Role{}, &admin.Customers{}, &admin.PackagingOfficer{}, &admin.Categories{}, &admin.Vendors{}, &admin.Units{}, &admin.Stocks{}, &admin.Purchases{}, &admin.CartItems{}, &admin.ItemTransactions{})
 
 	if err != nil {
 		log.Fatalf("failed to perform database migration: %s\n", err)
@@ -75,7 +76,7 @@ func SeedAdminData(db *gorm.DB) error {
 
 	// Data admin yang ingin dibuat
 	admins := []admin.Admin{
-		{Name: "superadmin", Email: "superadmin@example.com", Phone: "123456789", RoleID: 1, Voucher: "superadmin123", Password: "superadmin12345"},
+		{Name: "superadmin", Email: "superadmin@example.com", Phone: "081382815860", RoleID: 1, Voucher: "superadmin123", Password: "superadmin12345"},
 		{Name: "admin1", Email: "admin1@example.com", Phone: "987654321", RoleID: 2, Voucher: "admin1123", Password: "admin112345"},
 		{Name: "admin2", Email: "admin2@example.com", Phone: "987654322", RoleID: 2, Voucher: "admin2123", Password: "admin212345"},
 	}
@@ -361,24 +362,26 @@ func SeedPurchasesData(db *gorm.DB) error {
 	if len(existingPurchases) == 0 && len(existingStocks) == 0 {
 		purchasesData := []admin.Purchases{
 			{
-				VendorID:      1, // Pastikan vendor ini ada di tabel vendors
-				StockName:     "Produk A",
-				StockCode:     "A001",
-				CategoryID:    1, // Pastikan kategori ini ada di tabel categories
-				UnitID:        1, // Pastikan unit ini ada di tabel units
-				Description:   "Lorem ipsum dolor sit amet.",
-				Quantity:      50,   // Jumlah yang dibeli
+				VendorID:    1, // Pastikan vendor ini ada di tabel vendors
+				StockName:   "Produk A",
+				StockCode:   "A001",
+				CategoryID:  1, // Pastikan kategori ini ada di tabel categories
+				UnitID:      1, // Pastikan unit ini ada di tabel units
+				Description: "Lorem ipsum dolor sit amet.",
+				Quantity:    50, // Jumlah yang dibeli
+				// Quantity:      100000000000000, // Jumlah yang dibeli
 				PurchasePrice: 500,  // Harga beli
 				SellingPrice:  1000, // Harga jual
 			},
 			{
-				VendorID:      2, // Pastikan vendor ini ada di tabel vendors
-				StockName:     "Produk B",
-				StockCode:     "B001",
-				CategoryID:    2, // Pastikan kategori ini ada di tabel categories
-				UnitID:        2, // Pastikan unit ini ada di tabel units
-				Description:   "Lorem ipsum dolor sit amet.",
-				Quantity:      75,   // Jumlah yang dibeli
+				VendorID:    2, // Pastikan vendor ini ada di tabel vendors
+				StockName:   "Produk B",
+				StockCode:   "B001",
+				CategoryID:  2, // Pastikan kategori ini ada di tabel categories
+				UnitID:      2, // Pastikan unit ini ada di tabel units
+				Description: "Lorem ipsum dolor sit amet.",
+				Quantity:    75, // Jumlah yang dibeli
+				// Quantity:      100000000000000, // Jumlah yang dibeli
 				PurchasePrice: 750,  // Harga beli
 				SellingPrice:  2000, // Harga jual
 			},

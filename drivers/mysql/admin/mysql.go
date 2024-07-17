@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -300,10 +301,10 @@ func (vr *adminRepository) RoleCreate(ctx context.Context, roleDomain *admin.Rol
 
 }
 
-func (vr *adminRepository) RoleGetByID(ctx context.Context, id string) (admin.RoleDomain, error) {
+func (ar *adminRepository) RoleGetByID(ctx context.Context, id string) (admin.RoleDomain, error) {
 	var role Role
 
-	if err := vr.conn.WithContext(ctx).First(&role, "id = ?", id).Error; err != nil {
+	if err := ar.conn.WithContext(ctx).First(&role, "id = ?", id).Error; err != nil {
 		return admin.RoleDomain{}, err
 	}
 
@@ -311,9 +312,9 @@ func (vr *adminRepository) RoleGetByID(ctx context.Context, id string) (admin.Ro
 
 }
 
-func (sr *adminRepository) RoleGetAll(ctx context.Context) ([]admin.RoleDomain, error) {
+func (ar *adminRepository) RoleGetAll(ctx context.Context) ([]admin.RoleDomain, error) {
 	var records []Role
-	if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {
+	if err := ar.conn.WithContext(ctx).Find(&records).Error; err != nil {
 		return nil, err
 	}
 
@@ -413,10 +414,10 @@ func (cr *adminRepository) CustomersGetByID(ctx context.Context, id string) (adm
 
 }
 
-func (sr *adminRepository) CustomersGetAll(ctx context.Context) ([]admin.CustomersDomain, error) {
+func (ar *adminRepository) CustomersGetAll(ctx context.Context) ([]admin.CustomersDomain, error) {
 	var records []Customers
 	// Melakukan Preload untuk menampilkan Slice CartItems yang berisi Customers dan Stocks
-	if err := sr.conn.WithContext(ctx).Preload("CartItems.Customers").Preload("CartItems.Stocks").
+	if err := ar.conn.WithContext(ctx).Preload("CartItems.Customers").Preload("CartItems.Stocks").
 		Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -425,6 +426,68 @@ func (sr *adminRepository) CustomersGetAll(ctx context.Context) ([]admin.Custome
 
 	for _, category := range records {
 		domain := category.ToCustomersDomain()
+		categories = append(categories, domain)
+	}
+
+	return categories, nil
+}
+
+func (ar *adminRepository) CustomerDelete(ctx context.Context, id string) error {
+	customer, err := ar.CustomersGetByID(ctx, id)
+
+	if err != nil {
+		return err
+	}
+
+	deletedCustomer := FromCustomersDomain(&customer)
+
+	err = ar.conn.WithContext(ctx).Delete(&deletedCustomer).Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cr *adminRepository) PackagingOfficerCreate(ctx context.Context, packagingOfficerDomain *admin.PackagingOfficerDomain) (admin.PackagingOfficerDomain, error) {
+	record := FromPackagingOfficerDomain(packagingOfficerDomain)
+	result := cr.conn.WithContext(ctx).Create(&record)
+
+	if err := result.Error; err != nil {
+		return admin.PackagingOfficerDomain{}, err
+	}
+
+	if err := result.Last(&record).Error; err != nil {
+		return admin.PackagingOfficerDomain{}, err
+	}
+
+	return record.ToPackagingOfficerDomain(), nil
+
+}
+
+func (cr *adminRepository) PackagingOfficerGetByID(ctx context.Context, id string) (admin.PackagingOfficerDomain, error) {
+	var packagingOfficer PackagingOfficer
+
+	if err := cr.conn.WithContext(ctx).First(&packagingOfficer, "id = ?", id).Error; err != nil {
+		return admin.PackagingOfficerDomain{}, err
+	}
+
+	return packagingOfficer.ToPackagingOfficerDomain(), nil
+
+}
+
+func (ar *adminRepository) PackagingOfficerGetAll(ctx context.Context) ([]admin.PackagingOfficerDomain, error) {
+	var records []PackagingOfficer
+	// Melakukan Preload untuk menampilkan Slice CartItems yang berisi Customers dan Stocks
+	if err := ar.conn.WithContext(ctx).Find(&records).Error; err != nil {
+		return nil, err
+	}
+
+	categories := []admin.PackagingOfficerDomain{}
+
+	for _, category := range records {
+		domain := category.ToPackagingOfficerDomain()
 		categories = append(categories, domain)
 	}
 
@@ -513,9 +576,9 @@ func (vr *adminRepository) VendorsGetByID(ctx context.Context, id string) (admin
 
 }
 
-func (sr *adminRepository) VendorsGetAll(ctx context.Context) ([]admin.VendorsDomain, error) {
+func (ar *adminRepository) VendorsGetAll(ctx context.Context) ([]admin.VendorsDomain, error) {
 	var records []Vendors
-	if err := sr.conn.WithContext(ctx).Find(&records).Error; err != nil {
+	if err := ar.conn.WithContext(ctx).Find(&records).Error; err != nil {
 		return nil, err
 	}
 
@@ -613,12 +676,12 @@ func (ur *adminRepository) StocksGetByID(ctx context.Context, id string) (admin.
 
 }
 
-func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.StocksDomain, int, error) {
+func (ar *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.StocksDomain, int, error) {
 	var records []Stocks
 	offset := (page - 1) * limit
 
 	// Build the base query with pagination, sorting, and preload
-	query := sr.conn.WithContext(ctx).
+	query := ar.conn.WithContext(ctx).
 		Preload("Categories").
 		Preload("Units").
 		Offset(offset).
@@ -679,7 +742,7 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 
 	// Get the total count of items without pagination
 	var totalItems int64
-	countQuery := sr.conn.Model(&Stocks{}).
+	countQuery := ar.conn.Model(&Stocks{}).
 		Joins("LEFT JOIN categories ON categories.id = stocks.category_id").
 		Joins("LEFT JOIN units ON units.id = stocks.unit_id")
 
@@ -727,12 +790,12 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 }
 
 // search by name, search by category gagal, filter, asc ok
-// func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.StocksDomain, int, error) {
+// func (ar *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.StocksDomain, int, error) {
 // 	var records []Stocks
 // 	offset := (page - 1) * limit
 
 // 	// Build the base query with pagination and sorting
-// 	query := sr.conn.WithContext(ctx).
+// 	query := ar.conn.WithContext(ctx).
 // 		Model(&Stocks{}).
 // 		Preload("Categories").
 // 		Preload("Units").
@@ -786,7 +849,7 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 
 // 	// Get the total count of items without pagination
 // 	var totalItems int64
-// 	countQuery := sr.conn.Model(&Stocks{})
+// 	countQuery := ar.conn.Model(&Stocks{})
 
 // 	// Apply search and filter conditions for count query
 // 	if search != "" {
@@ -823,12 +886,12 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 // 	return stocksDomain, int(totalItems), nil
 // }
 
-// func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]admin.StocksDomain, int, error) {
+// func (ar *adminRepository) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]admin.StocksDomain, int, error) {
 // 	var records []Stocks
 // 	offset := (page - 1) * limit
 
 // 	// Build the query with pagination, sorting, and search
-// 	query := sr.conn.WithContext(ctx).Preload("Categories").Preload("Units").
+// 	query := ar.conn.WithContext(ctx).Preload("Categories").Preload("Units").
 // 		Offset(offset).Limit(limit).Order(fmt.Sprintf("%s %s", sort, order))
 
 // 	if search != "" {
@@ -849,7 +912,7 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 
 // 	// Get the total count of items without pagination
 // 	var totalItems int64
-// 	countQuery := sr.conn.Model(&Stocks{})
+// 	countQuery := ar.conn.Model(&Stocks{})
 // 	if search != "" {
 // 		countQuery = countQuery.Where("stock_name LIKE ?", "%"+search+"%")
 // 	}
@@ -858,9 +921,9 @@ func (sr *adminRepository) StocksGetAll(ctx context.Context, page int, limit int
 // 	return stocksDomain, int(totalItems), nil
 // }
 
-// func (sr *adminRepository) StocksGetAll(ctx context.Context) ([]admin.StocksDomain, error) {
+// func (ar *adminRepository) StocksGetAll(ctx context.Context) ([]admin.StocksDomain, error) {
 // 	var records []Stocks
-// 	if err := sr.conn.WithContext(ctx).
+// 	if err := ar.conn.WithContext(ctx).
 // 		Preload("Categories").Preload("Units").
 // 		Find(&records).Error; err != nil {
 // 		return nil, err
@@ -963,12 +1026,12 @@ func (pr *adminRepository) PurchasesGetByID(ctx context.Context, id string) (adm
 
 }
 
-func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.PurchasesDomain, int, error) {
+func (ar *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.PurchasesDomain, int, error) {
 	var records []Purchases
 	offset := (page - 1) * limit
 
 	// Build the base query with pagination, sorting, and preload
-	query := sr.conn.WithContext(ctx).
+	query := ar.conn.WithContext(ctx).
 		Preload("Vendors").
 		Preload("Categories").
 		Preload("Units").
@@ -1032,7 +1095,7 @@ func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit 
 
 	// Get the total count of items without pagination
 	var totalItems int64
-	countQuery := sr.conn.Model(&Purchases{}).
+	countQuery := ar.conn.Model(&Purchases{}).
 		Joins("LEFT JOIN vendors ON vendors.id = purchases.vendor_id").
 		Joins("LEFT JOIN categories ON categories.id = purchases.category_id").
 		Joins("LEFT JOIN units ON units.id = purchases.unit_id")
@@ -1081,12 +1144,12 @@ func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit 
 	return purchasesDomain, int(totalItems), nil
 }
 
-// func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]admin.PurchasesDomain, int, error) {
+// func (ar *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]admin.PurchasesDomain, int, error) {
 // 	var records []Purchases
 // 	offset := (page - 1) * limit
 
 // 	// Bangun query dengan paginasi, sorting, dan pencarian
-// 	query := sr.conn.WithContext(ctx).
+// 	query := ar.conn.WithContext(ctx).
 // 		Preload("Vendors").Preload("Categories").Preload("Units").
 // 		Offset(offset).Limit(limit).Order(fmt.Sprintf("%s %s", sort, order))
 
@@ -1108,7 +1171,7 @@ func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit 
 
 // 	// Dapatkan total item tanpa paginasi
 // 	var totalItems int64
-// 	countQuery := sr.conn.Model(&Purchases{})
+// 	countQuery := ar.conn.Model(&Purchases{})
 // 	if search != "" {
 // 		countQuery = countQuery.Where("stock_name LIKE ?", "%"+search+"%")
 // 	}
@@ -1117,10 +1180,10 @@ func (sr *adminRepository) PurchasesGetAll(ctx context.Context, page int, limit 
 // 	return purchasesDomain, int(totalItems), nil
 // }
 
-// func (sr *adminRepository) PurchasesGetAll(ctx context.Context) ([]admin.PurchasesDomain, error) {
+// func (ar *adminRepository) PurchasesGetAll(ctx context.Context) ([]admin.PurchasesDomain, error) {
 // 	// Memuat data Purchases beserta relasi Vendors, Categories, dan Units
 // 	var records []Purchases
-// 	if err := sr.conn.WithContext(ctx).
+// 	if err := ar.conn.WithContext(ctx).
 // 		// Preload("Vendors").Preload("Categories").Preload("Units").
 // 		Preload("Vendors").Preload("Categories").Preload("Units").
 // 		Find(&records).Error; err != nil {
@@ -1230,10 +1293,10 @@ func (pr *adminRepository) CartItemsCreate(ctx context.Context, itemDomain *admi
 
 }
 
-func (sr *adminRepository) CartItemsGetByID(ctx context.Context, id string) (admin.CartItemsDomain, error) {
+func (ar *adminRepository) CartItemsGetByID(ctx context.Context, id string) (admin.CartItemsDomain, error) {
 	var item CartItems
 
-	if err := sr.conn.WithContext(ctx).
+	if err := ar.conn.WithContext(ctx).
 		Preload("Customers").
 		Preload("Stocks").
 		Preload("Stocks.Units").
@@ -1245,11 +1308,11 @@ func (sr *adminRepository) CartItemsGetByID(ctx context.Context, id string) (adm
 
 }
 
-// func (sr *adminRepository) CartItemsGetByCustomerID(ctx context.Context, customerId string) (admin.CustomersDomain, error) {
+// func (ar *adminRepository) CartItemsGetByCustomerID(ctx context.Context, customerId string) (admin.CustomersDomain, error) {
 // 	var customer Customers
 
-// 	// if err := sr.conn.WithContext(ctx).Preload("Customers").Preload("Stocks").First(&item, "customer_id = ?", cartItemsDomain.CustomerID).Error; err != nil {
-// 	if err := sr.conn.WithContext(ctx).Preload("CartItems").Where(" id = ?", customerId).First(&customer).Error; err != nil {
+// 	// if err := ar.conn.WithContext(ctx).Preload("Customers").Preload("Stocks").First(&item, "customer_id = ?", cartItemsDomain.CustomerID).Error; err != nil {
+// 	if err := ar.conn.WithContext(ctx).Preload("CartItems").Where(" id = ?", customerId).First(&customer).Error; err != nil {
 // 		return admin.CustomersDomain{}, err
 // 	}
 // 	// if err != nil {
@@ -1261,10 +1324,10 @@ func (sr *adminRepository) CartItemsGetByID(ctx context.Context, id string) (adm
 // }
 
 // Sulit-Sulit :v
-func (sr *adminRepository) CartItemsGetAllByCustomerID(ctx context.Context, customerId string) ([]admin.CartItemsDomain, error) {
+func (ar *adminRepository) CartItemsGetAllByCustomerID(ctx context.Context, customerId string) ([]admin.CartItemsDomain, error) {
 	var cartItems []CartItems
 
-	if err := sr.conn.WithContext(ctx).
+	if err := ar.conn.WithContext(ctx).
 		Preload("Customers").
 		Preload("Stocks").
 		Preload("Stocks.Units").
@@ -1302,9 +1365,9 @@ func (sr *adminRepository) CartItemsGetAllByCustomerID(ctx context.Context, cust
 
 }
 
-func (sr *adminRepository) CartItemsGetAll(ctx context.Context) ([]admin.CartItemsDomain, error) {
+func (ar *adminRepository) CartItemsGetAll(ctx context.Context) ([]admin.CartItemsDomain, error) {
 	var records []CartItems
-	if err := sr.conn.WithContext(ctx).
+	if err := ar.conn.WithContext(ctx).
 		Preload("Customers").
 		Preload("Stocks").
 		Preload("Stocks.Units").
@@ -1323,8 +1386,8 @@ func (sr *adminRepository) CartItemsGetAll(ctx context.Context) ([]admin.CartIte
 	return cartItemsDomain, nil
 }
 
-func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error {
-	items, err := sr.CartItemsGetByID(ctx, id)
+func (ar *adminRepository) CartItemsDelete(ctx context.Context, id string) error {
+	items, err := ar.CartItemsGetByID(ctx, id)
 
 	if err != nil {
 		return err
@@ -1334,7 +1397,7 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 
 	// Ambil semua item keranjang dari pelanggan yang sama
 	var customerItems []CartItems
-	err = sr.conn.WithContext(ctx).
+	err = ar.conn.WithContext(ctx).
 		Where("customer_id = ?", deletedItems.CustomerID).
 		Find(&customerItems).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -1353,7 +1416,7 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 	for _, item := range customerItems {
 		if item.ID != deletedItems.ID {
 			item.SubTotal = subTotal
-			if err := sr.conn.WithContext(ctx).Save(&item).Error; err != nil {
+			if err := ar.conn.WithContext(ctx).Save(&item).Error; err != nil {
 				return err
 			}
 		}
@@ -1361,7 +1424,7 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 
 	// Hapus data item keranjang
 	// Gunakan Unscope untuk menghapus data secara permanent
-	if err := sr.conn.WithContext(ctx).Unscoped().Delete(&deletedItems).Error; err != nil {
+	if err := ar.conn.WithContext(ctx).Unscoped().Delete(&deletedItems).Error; err != nil {
 		return err
 	}
 
@@ -1369,7 +1432,7 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 
 	// // Ambil semua penjualan lainnya
 	// var allItems []CartItems
-	// err = sr.conn.WithContext(ctx).Find(&allItems).Error
+	// err = ar.conn.WithContext(ctx).Find(&allItems).Error
 	// if err != nil && err != gorm.ErrRecordNotFound {
 	// 	return err
 	// }
@@ -1386,26 +1449,26 @@ func (sr *adminRepository) CartItemsDelete(ctx context.Context, id string) error
 	// for _, item := range allItems {
 	// 	if item.ID != deletedItems.ID {
 	// 		item.SubTotal = totalAllPrice
-	// 		if err := sr.conn.WithContext(ctx).Save(&item).Error; err != nil {
+	// 		if err := ar.conn.WithContext(ctx).Save(&item).Error; err != nil {
 	// 			return err
 	// 		}
 	// 	}
 	// }
 
 	// // Hapus data penjualan
-	// if err := sr.conn.WithContext(ctx).Unscoped().Delete(&deletedItems).Error; err != nil {
+	// if err := ar.conn.WithContext(ctx).Unscoped().Delete(&deletedItems).Error; err != nil {
 	// 	return err
 	// }
 
 	// return nil
 }
 
-func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, customerId string) (admin.ItemTransactionsDomain, error) {
+func (ar *adminRepository) ItemTransactionsCreate(ctx context.Context, customerId string) (admin.ItemTransactionsDomain, error) {
 
 	var cartItemsData []CartItems
 
 	// Ambil semua data penjualan berdasarkan customerID
-	if err := sr.conn.WithContext(ctx).
+	if err := ar.conn.WithContext(ctx).
 		Where("customer_id = ?", customerId).
 		Find(&cartItemsData).Error; err != nil {
 		return admin.ItemTransactionsDomain{}, err
@@ -1419,7 +1482,7 @@ func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, customerI
 	for _, cartItems := range cartItemsData {
 		// Periksa stok yang terkait dengan penjualan
 		var stock Stocks
-		if err := sr.conn.WithContext(ctx).Where("id = ?", cartItems.StockID).First(&stock).Error; err != nil {
+		if err := ar.conn.WithContext(ctx).Where("id = ?", cartItems.StockID).First(&stock).Error; err != nil {
 			return admin.ItemTransactionsDomain{}, err
 		}
 
@@ -1432,7 +1495,7 @@ func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, customerI
 		stock.StockTotal -= cartItems.Quantity
 
 		// Simpan perubahan stok ke database
-		if err := sr.conn.WithContext(ctx).Save(&stock).Error; err != nil {
+		if err := ar.conn.WithContext(ctx).Save(&stock).Error; err != nil {
 			return admin.ItemTransactionsDomain{}, err
 		}
 
@@ -1449,38 +1512,532 @@ func (sr *adminRepository) ItemTransactionsCreate(ctx context.Context, customerI
 		}
 
 		// Simpan catatan itemTransactions
-		if err := sr.conn.WithContext(ctx).Create(&itemTransactionsRecord).Error; err != nil {
+		if err := ar.conn.WithContext(ctx).Create(&itemTransactionsRecord).Error; err != nil {
 			return admin.ItemTransactionsDomain{}, err
 		}
 	}
 
 	// Hapus semua data penjualan yang terkait dengan customerID
-	if err := sr.conn.WithContext(ctx).Where("customer_id = ?", customerId).Unscoped().Delete(&CartItems{}).Error; err != nil {
+	if err := ar.conn.WithContext(ctx).Where("customer_id = ?", customerId).Unscoped().Delete(&CartItems{}).Error; err != nil {
 		return admin.ItemTransactionsDomain{}, err
 	}
 
 	return admin.ItemTransactionsDomain{}, nil
 }
 
-func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.ItemTransactionsDomain, error) {
+func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]admin.ItemTransactionsDomain, int, error) {
 	var records []ItemTransactions
-	if err := cr.conn.WithContext(ctx).
+	offset := (page - 1) * limit
+
+	// Build the base query with pagination, sorting, and preload
+	query := cr.conn.WithContext(ctx).
 		Preload("Customers").
 		Preload("Stocks").
 		Preload("Stocks.Units").
 		Preload("Stocks.Categories").
-		Find(&records).Error; err != nil {
-		return nil, err
+		Offset(offset).
+		Limit(limit).
+		Order(fmt.Sprintf("%s %s", sort, order))
+
+	// Handle sorting and joins for sorting
+	if sort == "stock_name" {
+		query = query.Joins("LEFT JOIN stocks ON stocks.id = item_transactions.stock_id").
+			Order(fmt.Sprintf("stocks.%s %s", sort, order))
+	} else if sort == "customer_name" {
+		query = query.Joins("LEFT JOIN customers ON customers.id = item_transactions.customer_id").
+			Order(fmt.Sprintf("customers.%s %s", sort, order))
+	} else {
+		query = query.Order(fmt.Sprintf("%s %s", sort, order))
 	}
 
-	itemTransactionsDomain := []admin.ItemTransactionsDomain{}
-
-	for _, stockHistory := range records {
-		itemTransactionsDomain = append(itemTransactionsDomain, stockHistory.ToItemTransactionsDomain())
+	// Add search condition if search keyword is provided
+	if search != "" {
+		query = query.
+			Joins("LEFT JOIN customers ON customers.id = item_transactions.customer_id").
+			Joins("LEFT JOIN stocks ON stocks.id = item_transactions.stock_id").
+			Joins("LEFT JOIN units ON units.id = item_transactions.unit_id").
+			Joins("LEFT JOIN categories ON categories.id = item_transactions.category_id").
+			Where("stocks.stock_name LIKE ?", "%"+search+"%").
+			Or("stocks.stock_code LIKE ?", "%"+search+"%").
+			Or("customers.customer_name LIKE ?", "%"+search+"%").
+			Or("categories.category_name LIKE ?", "%"+search+"%").
+			Or("units.unit_name LIKE ?", "%"+search+"%")
 	}
 
-	return itemTransactionsDomain, nil
+	// Add filter conditions
+	for key, value := range filters {
+		switch key {
+		case "customer_id":
+			query = query.Where("customer_id = ?", value)
+		case "stock_id":
+			query = query.Where("stock_id = ?", value)
+		case "unit_id":
+			query = query.Where("unit_id = ?", value)
+		case "category_id":
+			query = query.Where("category_id = ?", value)
+		case "quantity_min":
+			query = query.Where("quantity >= ?", value)
+		case "quantity_max":
+			query = query.Where("quantity <= ?", value)
+		case "price_min":
+			query = query.Where("price >= ?", value)
+		case "price_max":
+			query = query.Where("price <= ?", value)
+		case "sub_total_min":
+			query = query.Where("sub_total >= ?", value)
+		case "sub_total_max":
+			query = query.Where("sub_total <= ?", value)
+		case "customer_name":
+			customerNames := value.([]string)
+			query = query.Joins("LEFT JOIN customers ON customers.id = item_transactions.customer_id").
+				Where("customers.customer_name IN (?)", customerNames)
+		case "stock_name":
+			stockNames := value.([]string)
+			query = query.Joins("LEFT JOIN stocks ON stocks.id = item_transactions.stock_id").
+				Where("stocks.stock_name IN (?)", stockNames)
+		case "unit_name":
+			unitNames := value.([]string)
+			query = query.Joins("LEFT JOIN units ON units.id = item_transactions.unit_id").
+				Where("units.unit_name IN (?)", unitNames)
+		case "category_name":
+			categoryNames := value.([]string)
+			query = query.Joins("LEFT JOIN categories ON categories.id = item_transactions.category_id").
+				Where("categories.category_name IN (?)", categoryNames)
+		}
+	}
+
+	// Execute the query
+	if err := query.Find(&records).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to domain models
+	itemTransactionsDomain := make([]admin.ItemTransactionsDomain, len(records))
+	for i, itemTransaction := range records {
+		itemTransactionsDomain[i] = itemTransaction.ToItemTransactionsDomain()
+	}
+
+	// Get the total count of items without pagination
+	var totalItems int64
+	countQuery := cr.conn.Model(&ItemTransactions{}).
+		Joins("LEFT JOIN customers ON customers.id = item_transactions.customer_id").
+		Joins("LEFT JOIN stocks ON stocks.id = item_transactions.stock_id").
+		Joins("LEFT JOIN units ON units.id = item_transactions.unit_id").
+		Joins("LEFT JOIN categories ON categories.id = item_transactions.category_id")
+
+	// Apply search and filter conditions for count query
+	if search != "" {
+		countQuery = countQuery.
+			Where("stocks.stock_name LIKE ?", "%"+search+"%").
+			Or("stocks.stock_code LIKE ?", "%"+search+"%").
+			Or("customers.customer_name LIKE ?", "%"+search+"%").
+			Or("categories.category_name LIKE ?", "%"+search+"%").
+			Or("units.unit_name LIKE ?", "%"+search+"%")
+	}
+
+	for key, value := range filters {
+		switch key {
+		case "customer_id":
+			countQuery = countQuery.Where("customer_id = ?", value)
+		case "stock_id":
+			countQuery = countQuery.Where("stock_id = ?", value)
+		case "unit_id":
+			countQuery = countQuery.Where("unit_id = ?", value)
+		case "category_id":
+			countQuery = countQuery.Where("category_id = ?", value)
+		case "quantity_min":
+			countQuery = countQuery.Where("quantity >= ?", value)
+		case "quantity_max":
+			countQuery = countQuery.Where("quantity <= ?", value)
+		case "price_min":
+			countQuery = countQuery.Where("price >= ?", value)
+		case "price_max":
+			countQuery = countQuery.Where("price <= ?", value)
+		case "sub_total_min":
+			countQuery = countQuery.Where("sub_total >= ?", value)
+		case "sub_total_max":
+			countQuery = countQuery.Where("sub_total <= ?", value)
+		case "customer_name":
+			customerNames := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN customers ON customers.id = item_transactions.customer_id").
+				Where("customers.customer_name IN (?)", customerNames)
+		case "stock_name":
+			stockNames := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN stocks ON stocks.id = item_transactions.stock_id").
+				Where("stocks.stock_name IN (?)", stockNames)
+		case "unit_name":
+			unitNames := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN units ON units.id = item_transactions.unit_id").
+				Where("units.unit_name IN (?)", unitNames)
+		case "category_name":
+			categoryNames := value.([]string)
+			countQuery = countQuery.Joins("LEFT JOIN categories ON categories.id = item_transactions.category_id").
+				Where("categories.category_name IN (?)", categoryNames)
+		}
+	}
+
+	countQuery.Count(&totalItems)
+
+	return itemTransactionsDomain, int(totalItems), nil
 }
+
+func (ar *adminRepository) ReminderPurchaseOrderCreate(ctx context.Context, reminderPurchaseOrderDomain *admin.ReminderPurchaseOrderDomain) (admin.ItemTransactionsDomain, error) {
+	// Ambil semua data item keranjang berdasarkan customerID
+	var cartItemsData []CartItems
+	if err := ar.conn.WithContext(ctx).
+		Where("customer_id = ?", reminderPurchaseOrderDomain.CartItem.CustomerID).
+		Preload("Customers").
+		Find(&cartItemsData).Error; err != nil {
+		return admin.ItemTransactionsDomain{}, err
+	}
+
+	// Jika tidak ada item dalam keranjang, kembalikan error
+	if len(cartItemsData) == 0 {
+		return admin.ItemTransactionsDomain{}, fmt.Errorf("no cart items found for customer with ID %d", reminderPurchaseOrderDomain.CartItem.CustomerID)
+	}
+
+	// Buat daftar item untuk pesan
+	var itemList string
+	customerInfo := struct {
+		Name    string
+		Email   string
+		Address string
+		Phone   string
+	}{}
+
+	for _, cartItems := range cartItemsData {
+		// Ambil customer info dari item keranjang
+		if customerInfo.Name == "" {
+			customerInfo.Name = cartItems.Customers.CustomerName
+			customerInfo.Email = cartItems.Customers.CustomerEmail
+			customerInfo.Address = cartItems.Customers.CustomerAddress
+			customerInfo.Phone = cartItems.Customers.CustomerPhone
+		}
+
+		// Periksa stok yang terkait dengan penjualan
+		var stock Stocks
+		if err := ar.conn.WithContext(ctx).Where("id = ?", cartItems.StockID).First(&stock).Error; err != nil {
+			return admin.ItemTransactionsDomain{}, err
+		}
+
+		// Kurangi stok dengan jumlah yang dijual
+		if stock.StockTotal < cartItems.Quantity {
+			errMsg := fmt.Sprintf("stok tidak cukup untuk penjualan dengan stock_id %d", cartItems.StockID)
+			log.Println(errMsg)
+			return admin.ItemTransactionsDomain{}, fmt.Errorf(errMsg)
+		}
+		stock.StockTotal -= cartItems.Quantity
+
+		// Simpan perubahan stok ke database
+		if err := ar.conn.WithContext(ctx).Save(&stock).Error; err != nil {
+			return admin.ItemTransactionsDomain{}, err
+		}
+
+		// Buat catatan itemTransactions
+		itemTransactionsRecord := ItemTransactions{
+			CustomerID: cartItems.CustomerID,
+			StockID:    cartItems.StockID,
+			UnitID:     stock.UnitID,
+			CategoryID: stock.CategoryID,
+			Quantity:   cartItems.Quantity,
+			Price:      cartItems.Price,
+			SubTotal:   cartItems.SubTotal,
+		}
+
+		// Simpan catatan itemTransactions
+		if err := ar.conn.WithContext(ctx).Create(&itemTransactionsRecord).Error; err != nil {
+			return admin.ItemTransactionsDomain{}, err
+		}
+
+		// Tambahkan detail item ke itemList
+		itemDetail := fmt.Sprintf("Product: %s, Quantity: %d", stock.StockName, cartItems.Quantity)
+		itemList += itemDetail + "\n"
+	}
+
+	// Ambil semua data Packaging Officer dan log informasinya
+	var packagingOfficers []PackagingOfficer
+	if err := ar.conn.WithContext(ctx).Find(&packagingOfficers).Error; err != nil {
+		return admin.ItemTransactionsDomain{}, err
+	}
+
+	// Format pesan yang akan dikirim
+	message := fmt.Sprintf("Reminder for Packaging: Purchase-Order needs to be prepared for customer %s. Please check the item list:\n%s\n\nCustomer Details:\nName: %s\nEmail: %s\nAddress: %s\nPhone: %s",
+		customerInfo.Name, itemList, customerInfo.Name, customerInfo.Email, customerInfo.Address, customerInfo.Phone)
+
+	// Hitung durasi sampai ReminderTime
+	duration := time.Until(reminderPurchaseOrderDomain.ReminderTime)
+
+	// Jalankan goroutine untuk menunggu sampai ReminderTime dan kirim pesan
+	for _, officer := range packagingOfficers {
+		log.Printf("Packaging Officer - ID: %d, Name: %s, Phone: %s\n", officer.ID, officer.OfficerName, officer.OfficerPhone)
+
+		go func(officer PackagingOfficer, message string) {
+			time.Sleep(duration)
+
+			// Kirim pesan WhatsApp ke Packaging Officer
+			err := utils.SendWhatsAppMessage(officer.OfficerPhone, message, "default")
+			if err != nil {
+				log.Printf("Failed to send WhatsApp message to Packaging Officer: %v\n", err)
+			} else {
+				log.Printf("WhatsApp message sent to Packaging Officer %s: %s\n", officer.OfficerPhone, message)
+			}
+		}(officer, message)
+
+		// Simpan reminder ke database
+		reminderRecord := ReminderPurchaseOrder{
+			PackagingOfficerID: officer.ID,
+			ReminderTime:       reminderPurchaseOrderDomain.ReminderTime,
+		}
+
+		if err := ar.conn.WithContext(ctx).Create(&reminderRecord).Error; err != nil {
+			return admin.ItemTransactionsDomain{}, err
+		}
+	}
+
+	// Hapus semua data item keranjang yang terkait dengan customerID
+	if err := ar.conn.WithContext(ctx).Where("customer_id = ?", reminderPurchaseOrderDomain.CartItem.CustomerID).Unscoped().Delete(&CartItems{}).Error; err != nil {
+		return admin.ItemTransactionsDomain{}, err
+	}
+
+	return admin.ItemTransactionsDomain{}, nil
+}
+
+// // Pastikan AdminVoucher tidak kosong
+// if reminderPurchaseOrderDomain.Admins.Voucher == "" {
+// 	return admin.ItemTransactionsDomain{}, fmt.Errorf("admin voucher is required")
+// }
+
+// // Dapatkan AdminID dari record Admin berdasarkan voucher
+// var admins Admin
+// if err := ar.conn.WithContext(ctx).
+// 	Where("admin_id = ?", reminderPurchaseOrderDomain.Admins.ID).
+// 	// First(&admins, "id = ?", reminderPurchaseOrderDomain.AdminID).Error; err != nil {
+// 	First(&admins).Error; err != nil {
+// 	return admin.ItemTransactionsDomain{}, err
+// }
+
+// // Tampilkan log informasi admin
+// log.Printf("Admin - ID: %d, Name: %s, Email: %s, Phone: %s, Voucher: %s\n", admins.ID, admins.Name, admins.Email, admins.Phone, admins.Voucher)
+
+// // Ambil semua data item keranjang dan log informasinya
+// var cartItems []CartItems
+// if err := ar.conn.WithContext(ctx).Find(&cartItems).Error; err != nil {
+// 	return admin.ItemTransactionsDomain{}, err
+// }
+
+// // Log informasi tentang setiap item dalam keranjang
+// for _, items := range cartItems {
+// 	log.Printf("Cart Item - ID: %d, CustomerID: %d, StockID: %d, Quantity: %d, Price: %d, SubTotal: %d\n",
+// 		items.ID, items.CustomerID, items.StockID, items.Quantity, items.Price, items.SubTotal)
+// }
+
+// Ambil semua data item keranjang berdasarkan customerID dan log informasinya
+// var cartItems []CartItems
+// if err := ar.conn.WithContext(ctx).
+// 	Where("customer_id = ?", reminderPurchaseOrderDomain.CartItem.CustomerID).
+// 	Find(&cartItems).Error; err != nil {
+// 	return admin.ItemTransactionsDomain{}, err
+// }
+
+// // Log informasi tentang setiap item dalam keranjang
+// for _, items := range cartItems {
+// 	log.Printf("Cart Item - ID: %d, CustomerID: %d, StockID: %d, Quantity: %d, Price: %d, SubTotal: %d\n",
+// 		items.ID, items.CustomerID, items.StockID, items.Quantity, items.Price, items.SubTotal)
+// }
+
+// // Konversi record ke domain
+// packagingOfficerDomain := packagingOfficerRecord.ToPackagingOfficerDomain()
+
+// utils.ScheduleNotification(*reminderPurchaseOrderDomain, packagingOfficerDomain) // Menggunakan nomor telepon Packaging Officer untuk mengirim pesan
+
+// Panggil fungsi untuk mengirimkan notifikasi WhatsApp ke Packaging Officer
+// admin, err := ar.AdminGetByID(ctx, reminderPurchaseOrderDomain.AdminID)
+// if err != nil {
+// 	return admin.ItemTransactionsDomain{}, err
+// }
+// func (ar *adminRepository) ReminderPurchaseOrderCreate(ctx context.Context, reminderPurchaseOrderDomain *admin.ReminderPurchaseOrderDomain) (admin.ItemTransactionsDomain, error) {
+// 	// Ambil semua data item keranjang berdasarkan customerID
+// 	var cartItemsData []CartItems
+// 	if err := ar.conn.WithContext(ctx).
+// 		Where("customer_id = ?", reminderPurchaseOrderDomain.CartItem.CustomerID).
+// 		Find(&cartItemsData).Error; err != nil {
+// 		return admin.ItemTransactionsDomain{}, err
+// 	}
+
+// 	// Jika tidak ada item dalam keranjang, kembalikan error
+// 	if len(cartItemsData) == 0 {
+// 		return admin.ItemTransactionsDomain{}, fmt.Errorf("no cart items found for customer with ID %d", reminderPurchaseOrderDomain.CartItem.CustomerID)
+// 	}
+
+// 	for _, cartItems := range cartItemsData {
+// 		// Periksa stok yang terkait dengan penjualan
+// 		var stock Stocks
+// 		if err := ar.conn.WithContext(ctx).Where("id = ?", cartItems.StockID).First(&stock).Error; err != nil {
+// 			return admin.ItemTransactionsDomain{}, err
+// 		}
+
+// 		// Kurangi stok dengan jumlah yang dijual
+// 		if stock.StockTotal < cartItems.Quantity {
+// 			errMsg := fmt.Sprintf("stok tidak cukup untuk penjualan dengan stock_id %d", cartItems.StockID)
+// 			log.Println(errMsg)
+// 			return admin.ItemTransactionsDomain{}, fmt.Errorf(errMsg)
+// 		}
+// 		stock.StockTotal -= cartItems.Quantity
+
+// 		// Simpan perubahan stok ke database
+// 		if err := ar.conn.WithContext(ctx).Save(&stock).Error; err != nil {
+// 			return admin.ItemTransactionsDomain{}, err
+// 		}
+
+// 		// Buat catatan itemTransactions
+// 		itemTransactionsRecord := ItemTransactions{
+// 			CustomerID: cartItems.CustomerID,
+// 			StockID:    cartItems.StockID,
+// 			UnitID:     stock.UnitID,
+// 			CategoryID: stock.CategoryID,
+// 			Quantity:   cartItems.Quantity,
+// 			Price:      cartItems.Price,
+// 			SubTotal:   cartItems.SubTotal,
+// 			// Sesuaikan dengan kolom lain jika perlu
+// 		}
+
+// 		// Simpan catatan itemTransactions
+// 		if err := ar.conn.WithContext(ctx).Create(&itemTransactionsRecord).Error; err != nil {
+// 			return admin.ItemTransactionsDomain{}, err
+// 		}
+// 	}
+
+// 	// Hapus semua data item keranjang yang terkait dengan customerID
+// 	if err := ar.conn.WithContext(ctx).Where("customer_id = ?", reminderPurchaseOrderDomain.CartItem.CustomerID).Unscoped().Delete(&CartItems{}).Error; err != nil {
+// 		return admin.ItemTransactionsDomain{}, err
+// 	}
+
+// 	// Panggil fungsi untuk mengirimkan notifikasi WhatsApp ke Packaging Officer
+// 	admins, err := ar.AdminGetByID(ctx, reminderPurchaseOrderDomain.AdminID)
+// 	if err != nil {
+// 		return admin.ItemTransactionsDomain{}, err
+// 	}
+
+// 	utils.ScheduleNotification(*reminderPurchaseOrderDomain, admins) // Menggunakan nomor telepon Admin untuk mengirim pesan ke Packaging Officer
+
+// 	return admin.ItemTransactionsDomain{}, nil
+// }
+
+/////////////
+// func (ar *adminRepository) ReminderPurchaseOrderCreate(ctx context.Context, reminderPurchaseOrderDomain *admin.ReminderPurchaseOrderDomain) (admin.ItemTransactionsDomain, error) {
+// 	// Ambil semua data item keranjang berdasarkan customerID
+// 	var cartItemsData []CartItems
+// 	if err := ar.conn.WithContext(ctx).
+// 		Where("customer_id = ?", reminderPurchaseOrderDomain.CartItem.CustomerID).
+// 		Find(&cartItemsData).Error; err != nil {
+// 		return admin.ItemTransactionsDomain{}, err
+// 	}
+
+// 	// Jika tidak ada item dalam keranjang, kembalikan error
+// 	if len(cartItemsData) == 0 {
+// 		return admin.ItemTransactionsDomain{}, fmt.Errorf("no cart items found for customer with ID %d", reminderPurchaseOrderDomain.CartItem.CustomerID)
+// 	}
+
+// 	for _, cartItems := range cartItemsData {
+// 		// Periksa stok yang terkait dengan penjualan
+// 		var stock Stocks
+// 		if err := ar.conn.WithContext(ctx).Where("id = ?", cartItems.StockID).First(&stock).Error; err != nil {
+// 			return admin.ItemTransactionsDomain{}, err
+// 		}
+
+// 		// Kurangi stok dengan jumlah yang dijual
+// 		if stock.StockTotal < cartItems.Quantity {
+// 			errMsg := fmt.Sprintf("stok tidak cukup untuk penjualan dengan stock_id %d", cartItems.StockID)
+// 			log.Println(errMsg)
+// 			return admin.ItemTransactionsDomain{}, fmt.Errorf(errMsg)
+// 		}
+// 		stock.StockTotal -= cartItems.Quantity
+
+// 		// Simpan perubahan stok ke database
+// 		if err := ar.conn.WithContext(ctx).Save(&stock).Error; err != nil {
+// 			return admin.ItemTransactionsDomain{}, err
+// 		}
+
+// 		// Buat catatan itemTransactions
+// 		itemTransactionsRecord := ItemTransactions{
+// 			CustomerID: cartItems.CustomerID,
+// 			StockID:    cartItems.StockID,
+// 			UnitID:     stock.UnitID,
+// 			CategoryID: stock.CategoryID,
+// 			Quantity:   cartItems.Quantity,
+// 			Price:      cartItems.Price,
+// 			SubTotal:   cartItems.SubTotal,
+// 			// Sesuaikan dengan kolom lain jika perlu
+// 		}
+
+// 		// Simpan catatan itemTransactions
+// 		if err := ar.conn.WithContext(ctx).Create(&itemTransactionsRecord).Error; err != nil {
+// 			return admin.ItemTransactionsDomain{}, err
+// 		}
+// 	}
+
+// 	// Hapus semua data item keranjang yang terkait dengan customerID
+// 	if err := ar.conn.WithContext(ctx).Where("customer_id = ?", reminderPurchaseOrderDomain.CartItem.CustomerID).Unscoped().Delete(&CartItems{}).Error; err != nil {
+// 		return admin.ItemTransactionsDomain{}, err
+// 	}
+
+// 	// Panggil fungsi untuk mengirimkan notifikasi WhatsApp ke Packaging Officer
+// 	admin, err := ar.AdminGetByID(ctx, reminderPurchaseOrderDomain.AdminID)
+// 	if err != nil {
+// 		return admin.ItemTransactionsDomain{}, err
+// 	}
+
+// 	reminderPreOrder := ReminderPreOrder{
+// 		ProductID:     reminderPurchaseOrderDomain.CartItem.StockID,
+// 		Quantity:      reminderPurchaseOrderDomain.CartItem.Quantity,
+// 		CustomerName:  reminderPurchaseOrderDomain.CartItem.Customers.CustomerName,
+// 		Packaging:     PackagingOfficer{},
+// 		ReminderTime:  time.Now().Add(24 * time.Hour), // Misalnya dijadwalkan untuk 1 hari ke depan
+// 		AdminPhone:    admin.Phone,
+// 		PackagingType: reminderPurchaseOrderDomain.CartItem.Stocks.CategoryName,
+// 	}
+// 	scheduleNotification(reminderPreOrder, admin)
+
+// 	return admin.ItemTransactionsDomain{}, nil
+// }
+
+// Panggil fungsi untuk mengirimkan notifikasi WhatsApp ke Packaging Officer
+// admin, err := ar.AdminGetByID(ctx, reminderPurchaseOrderDomain.AdminID)
+// if err != nil {
+// 	return admin.ItemTransactionsDomain{}, err
+// }
+
+// reminderPreOrder := ReminderPreOrder{
+// 	ProductID:    reminderPurchaseOrderDomain.CartItem.StockID,
+// 	Quantity:     reminderPurchaseOrderDomain.CartItem.Quantity,
+// 	CustomerName: reminderPurchaseOrderDomain.CartItem.Customers.CustomerName,
+// 	Packaging: PackagingOfficer{
+// 		OfficerPhone: admin.Phone, // Gunakan nomor telepon Admin untuk mengirim pesan ke Packaging Officer
+// 	},
+// 	ReminderTime: time.Now(), // Atur waktu pengingat, bisa disesuaikan
+// }
+
+// scheduleNotification(reminderPreOrder, admin)
+
+// func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.ItemTransactionsDomain, error) {
+// 	var records []ItemTransactions
+// 	if err := cr.conn.WithContext(ctx).
+// 		Preload("Customers").
+// 		Preload("Stocks").
+// 		Preload("Stocks.Units").
+// 		Preload("Stocks.Categories").
+// 		Find(&records).Error; err != nil {
+// 		return nil, err
+// 	}
+
+// 	itemTransactionsDomain := []admin.ItemTransactionsDomain{}
+
+// 	for _, stockHistory := range records {
+// 		itemTransactionsDomain = append(itemTransactionsDomain, stockHistory.ToItemTransactionsDomain())
+// 	}
+
+// 	return itemTransactionsDomain, nil
+// }
 
 // func (ir *adminRepository) CartsCreate(ctx context.Context, cartDomain *admin.CartsDomain) (admin.CartsDomain, error) {
 // 	record := FromCartsDomain(cartDomain)
@@ -1502,10 +2059,10 @@ func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.
 // 	return record.ToCartsDomain(), nil
 // }
 
-// func (sr *adminRepository) CartsGetByID(ctx context.Context, id string) (admin.CartsDomain, error) {
+// func (ar *adminRepository) CartsGetByID(ctx context.Context, id string) (admin.CartsDomain, error) {
 // 	var cart Carts
 
-// 	if err := sr.conn.WithContext(ctx).Preload("CartItems").First(&cart, "id = ?", id).Error; err != nil {
+// 	if err := ar.conn.WithContext(ctx).Preload("CartItems").First(&cart, "id = ?", id).Error; err != nil {
 // 		return admin.CartsDomain{}, err
 // 	}
 
@@ -1513,10 +2070,10 @@ func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.
 
 // }
 
-// func (sr *adminRepository) CartsGetAll(ctx context.Context) ([]admin.CartsDomain, error) {
+// func (ar *adminRepository) CartsGetAll(ctx context.Context) ([]admin.CartsDomain, error) {
 // 	var records []Carts
-// 	if err := sr.conn.WithContext(ctx).Preload("CartItems").
-// 		// if err := sr.conn.WithContext(ctx).
+// 	if err := ar.conn.WithContext(ctx).Preload("CartItems").
+// 		// if err := ar.conn.WithContext(ctx).
 // 		Find(&records).Error; err != nil {
 // 		return nil, err
 // 	}
@@ -1532,8 +2089,8 @@ func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.
 // 	return cartItemsDomain, nil
 // }
 
-// func (sr *adminRepository) CartsDelete(ctx context.Context, id string) error {
-// 	items, err := sr.CartsGetByID(ctx, id)
+// func (ar *adminRepository) CartsDelete(ctx context.Context, id string) error {
+// 	items, err := ar.CartsGetByID(ctx, id)
 
 // 	if err != nil {
 // 		return err
@@ -1543,7 +2100,7 @@ func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.
 
 // 	// Ambil semua penjualan lainnya
 // 	var allItems []Carts
-// 	err = sr.conn.WithContext(ctx).Find(&allItems).Error
+// 	err = ar.conn.WithContext(ctx).Find(&allItems).Error
 // 	if err != nil && err != gorm.ErrRecordNotFound {
 // 		return err
 // 	}
@@ -1560,14 +2117,14 @@ func (cr *adminRepository) ItemTransactionsGetAll(ctx context.Context) ([]admin.
 // 	// for _, item := range allItems {
 // 	// 	if item.ID != deletedItems.ID {
 // 	// 		item.TotalAllPrice = totalAllPrice
-// 	// 		if err := sr.conn.WithContext(ctx).Save(&item).Error; err != nil {
+// 	// 		if err := ar.conn.WithContext(ctx).Save(&item).Error; err != nil {
 // 	// 			return err
 // 	// 		}
 // 	// 	}
 // 	// }
 
 // 	// Hapus data penjualan
-// 	if err := sr.conn.WithContext(ctx).Unscoped().Delete(&deletedItems).Error; err != nil {
+// 	if err := ar.conn.WithContext(ctx).Unscoped().Delete(&deletedItems).Error; err != nil {
 // 		return err
 // 	}
 

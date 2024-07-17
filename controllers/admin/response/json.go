@@ -55,6 +55,17 @@ type Customers struct {
 	CartItems       []CartItems    `json:"cart_items"`
 }
 
+type PackagingOfficer struct {
+	ID             uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `json:"deleted_at"`
+	OfficerName    string         `json:"officer_name" validate:"required"`
+	OfficerAddress string         `json:"officer_address" validate:"required"`
+	OfficerEmail   string         `json:"officer_email" validate:"required"`
+	OfficerPhone   string         `json:"officer_phone" validate:"required"`
+}
+
 type Category struct {
 	ID           uint           `json:"id" gorm:"primaryKey"`
 	CreatedAt    time.Time      `json:"created_at"`
@@ -143,12 +154,38 @@ type ItemTransactions struct {
 	CustomerName string         `json:"customer_name"`
 	StockID      uint           `json:"stock_id"`
 	StockName    string         `json:"stock_name"`
+	StockCode    string         `json:"stock_code"`
 	UnitID       uint           `json:"unit_id"`
 	UnitName     string         `json:"unit_name"`
 	CategoryID   uint           `json:"category_id"`
 	CategoryName string         `json:"category_name"`
 	Quantity     int            `json:"quantity"`
 	SubTotal     int            `json:"sub_total"`
+}
+
+// type ReminderPurchaseOrder struct {
+// 	ID             uint           `json:"id" gorm:"primaryKey"`
+// 	CreatedAt      time.Time      `json:"created_at"`
+// 	UpdatedAt      time.Time      `json:"updated_at"`
+// 	DeletedAt      gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+// 	OfficerName    string         `json:"officer_name"`
+// 	OfficerAddress string         `json:"officer_address"`
+// 	OfficerEmail   string         `json:"officer_email"`
+// 	OfficerPhone   string         `json:"officer_phone"`
+// 	CustomerName   string         `json:"customer_name"`
+// 	StockName      string         `json:"stock_name"`
+// 	Quantity       int            `json:"quantity"`
+// }
+
+type ReminderPurchaseOrder struct {
+	ID           uint           `json:"id"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `json:"deleted_at"`
+	AdminID      string         `json:"admin_id" `
+	CartItem     string         // Asumsikan struktur CartItems sesuai dengan yang Anda definisikan sebelumnya
+	ReminderTime time.Time      `json:"reminder_time"`
+	Packaging    string         `json:"packaging"` // Asumsikan struktur Packaging sudah didefinisikan
 }
 
 // Pagination struct holds pagination information
@@ -230,6 +267,19 @@ func FromCustomersDomain(domain admin.CustomersDomain) Customers {
 		CustomerEmail:   domain.CustomerEmail,
 		CustomerPhone:   domain.CustomerPhone,
 		CartItems:       cartItems,
+	}
+}
+
+func FromPackagingOfficerDomain(domain admin.PackagingOfficerDomain) PackagingOfficer {
+	return PackagingOfficer{
+		ID:             domain.ID,
+		CreatedAt:      domain.CreatedAt,
+		UpdatedAt:      domain.UpdatedAt,
+		DeletedAt:      domain.DeletedAt,
+		OfficerName:    domain.OfficerName,
+		OfficerAddress: domain.OfficerAddress,
+		OfficerEmail:   domain.OfficerEmail,
+		OfficerPhone:   domain.OfficerPhone,
 	}
 }
 
@@ -332,11 +382,23 @@ func FromItemTransactionsDomain(domain admin.ItemTransactionsDomain) ItemTransac
 		CustomerName: domain.CustomerName,
 		StockID:      domain.StockID,
 		StockName:    domain.StockName,
+		StockCode:    domain.StockCode,
 		UnitID:       domain.UnitID,
 		UnitName:     domain.UnitName,
 		CategoryID:   domain.CategoryID,
 		CategoryName: domain.CategoryName,
 		Quantity:     domain.Quantity,
 		SubTotal:     domain.SubTotal,
+	}
+}
+
+func FromReminderPurchaseOrderDomain(domain admin.ReminderPurchaseOrderDomain) ReminderPurchaseOrder {
+	return ReminderPurchaseOrder{
+		ID:        domain.ID,
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		// AdminID:   domain.AdminID,
+		CartItem: domain.CartItem.CustomerName,
 	}
 }

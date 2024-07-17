@@ -59,6 +59,17 @@ type Customers struct {
 	CartItems       []CartItems    `gorm:"foreignKey:customer_id"` // Menentukan foreign key
 }
 
+type PackagingOfficer struct {
+	ID             uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `json:"deleted_at"`
+	OfficerName    string         `json:"officer_name"`
+	OfficerAddress string         `json:"officer_address"`
+	OfficerEmail   string         `json:"officer_email"`
+	OfficerPhone   string         `json:"officer_phone"`
+}
+
 type Categories struct {
 	ID           uint           `json:"id" gorm:"primaryKey"`
 	CreatedAt    time.Time      `json:"created_at"`
@@ -132,13 +143,9 @@ type CartItems struct {
 	CustomerID uint           `json:"customer_id"`
 	Stocks     Stocks         `json:"-" gorm:"foreignKey:stock_id"`
 	StockID    uint           `json:"stock_id"`
-	// Stocks berisi Units yang nantinya akan menampilkan data units menggunakan eager loading (`Preload``)
-	// Units      Units          `gorm:"foreignKey:unit_id"`
-	//akan terjadi constraint foreginKey dari unit_id
-	// UnitID    uint           `json:"unit_id"`
-	Quantity int `json:"quantity"`
-	Price    int `json:"price"`
-	SubTotal int `json:"sub_total"`
+	Quantity   int            `json:"quantity"`
+	Price      int            `json:"price"`
+	SubTotal   int            `json:"sub_total"`
 }
 
 type ItemTransactions struct {
@@ -156,6 +163,22 @@ type ItemTransactions struct {
 	Quantity   int            `json:"quantity"`
 	Price      int            `json:"price"`
 	SubTotal   int            `json:"sub_total"`
+}
+
+type ReminderPurchaseOrder struct {
+	ID                 uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeletedAt          gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+	PackagingOfficerID uint           `json:"packaging_officer_id"`
+	ReminderTime       time.Time      `json:"reminder_time"`
+
+	// Admins             Admin            `json:"-" gorm:"foreignKey:AdminID"`
+	// AdminID            uint      `json:"admin_id" `
+	// Packaging          PackagingOfficer `json:"-" gorm:"foreignKey:PackagingOfficerID"` // Asumsikan struktur Packaging sudah didefinisikan
+
+	// Admins             Admin            `json:"-" gorm:"foreignKey:AdminID"`
+
 }
 
 func (record *Admin) ToAdminDomain() admin.AdminDomain {
@@ -279,6 +302,32 @@ func FromCustomersDomain(domain *admin.CustomersDomain) *Customers {
 	}
 }
 
+func (record *PackagingOfficer) ToPackagingOfficerDomain() admin.PackagingOfficerDomain {
+	return admin.PackagingOfficerDomain{
+		ID:             record.ID,
+		CreatedAt:      record.CreatedAt,
+		UpdatedAt:      record.UpdatedAt,
+		DeletedAt:      record.DeletedAt,
+		OfficerName:    record.OfficerName,
+		OfficerAddress: record.OfficerAddress,
+		OfficerEmail:   record.OfficerEmail,
+		OfficerPhone:   record.OfficerPhone,
+	}
+}
+
+func FromPackagingOfficerDomain(domain *admin.PackagingOfficerDomain) *PackagingOfficer {
+	return &PackagingOfficer{
+		ID:             domain.ID,
+		CreatedAt:      domain.CreatedAt,
+		UpdatedAt:      domain.UpdatedAt,
+		DeletedAt:      domain.DeletedAt,
+		OfficerName:    domain.OfficerName,
+		OfficerAddress: domain.OfficerAddress,
+		OfficerEmail:   domain.OfficerEmail,
+		OfficerPhone:   domain.OfficerPhone,
+	}
+}
+
 func (record *Categories) ToCategoriesDomain() admin.CategoriesDomain {
 	return admin.CategoriesDomain{
 		ID:           record.ID,
@@ -288,6 +337,7 @@ func (record *Categories) ToCategoriesDomain() admin.CategoriesDomain {
 		CategoryName: record.CategoryName,
 	}
 }
+
 func FromCategoriesDomain(domain *admin.CategoriesDomain) *Categories {
 	return &Categories{
 		ID:           domain.ID,
@@ -466,6 +516,7 @@ func (record *ItemTransactions) ToItemTransactionsDomain() admin.ItemTransaction
 		CustomerName: record.Customers.CustomerName,
 		StockID:      record.StockID,
 		StockName:    record.Stocks.StockName,
+		StockCode:    record.Stocks.StockCode,
 		UnitID:       record.Stocks.UnitID,
 		UnitName:     record.Stocks.Units.UnitName,
 		CategoryID:   record.Stocks.CategoryID,
@@ -490,6 +541,35 @@ func FromItemTransactionsDomain(domain *admin.ItemTransactionsDomain) *ItemTrans
 		SubTotal:   domain.SubTotal,
 	}
 }
+
+func (record *ReminderPurchaseOrder) ToReminderPurchaseOrderDomain() admin.ReminderPurchaseOrderDomain {
+	return admin.ReminderPurchaseOrderDomain{
+		ID:        record.ID,
+		CreatedAt: record.CreatedAt,
+		UpdatedAt: record.UpdatedAt,
+		DeletedAt: record.DeletedAt,
+		// AdminID:            record.AdminID,
+		PackagingOfficerID: record.PackagingOfficerID,
+		ReminderTime:       record.ReminderTime,
+	}
+}
+
+func FromReminderPurchaseOrderDomain(domain admin.ReminderPurchaseOrderDomain) ReminderPurchaseOrder {
+	return ReminderPurchaseOrder{
+		ID:        domain.ID,
+		CreatedAt: domain.CreatedAt,
+		UpdatedAt: domain.UpdatedAt,
+		DeletedAt: domain.DeletedAt,
+		// AdminID:            domain.AdminID,
+		PackagingOfficerID: domain.PackagingOfficerID,
+		ReminderTime:       domain.ReminderTime,
+	}
+}
+
+// Stocks berisi Units yang nantinya akan menampilkan data units menggunakan eager loading (`Preload``)
+// Units      Units          `gorm:"foreignKey:unit_id"`
+//akan terjadi constraint foreginKey dari unit_id
+// UnitID    uint           `json:"unit_id"`
 
 // AdminProfileID uint           `json:"admin_profile_id" gorm:"not null"`
 // AdminProfile   AdminProfile   `json:"admin_profile" gorm:"foreignKey:AdminProfileID"`

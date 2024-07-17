@@ -60,14 +60,6 @@ func (usecase *adminUsecase) AdminVoucher(ctx context.Context, adminDomain *Admi
 	return token, nil
 }
 
-// admin, err := usecase.adminRepository.AdminGetByVoucher(ctx, adminDomain)
-
-// if err != nil {
-// 	return "", err
-// }
-
-// return admin.Voucher, nil
-
 func (usecase *adminUsecase) AdminProfileUpdate(ctx context.Context, adminDomain *AdminDomain, imagePath string, id string) (AdminDomain, string, error) {
 	return usecase.adminRepository.AdminProfileUpdate(ctx, adminDomain, imagePath, id)
 }
@@ -92,18 +84,6 @@ func (usecase *adminUsecase) RoleGetAll(ctx context.Context) ([]RoleDomain, erro
 	return usecase.adminRepository.RoleGetAll(ctx)
 }
 
-// func (usecase *adminUsecase) AdminProfileGetByID(ctx context.Context, id string) (AdminProfileDomain, error) {
-// 	return usecase.adminRepository.AdminProfileGetByID(ctx, id)
-// }
-
-// func (usecase *adminUsecase) AdminProfileUpdate(ctx context.Context, profileDomain *AdminProfileDomain, id string) (AdminProfileDomain, error) {
-// 	return usecase.adminRepository.AdminProfileUpdate(ctx, profileDomain, id)
-// }
-
-// func (usecase *adminUsecase) AdminProfileUploadImage(ctx context.Context, profileDomain *AdminProfileDomain, avatarPath string, id string) (AdminProfileDomain, string, error) {
-// 	return usecase.adminRepository.AdminProfileUploadImage(ctx, profileDomain, avatarPath, id)
-// }
-
 func (usecase *adminUsecase) CustomersCreate(ctx context.Context, customersDomain *CustomersDomain) (CustomersDomain, error) {
 	return usecase.adminRepository.CustomersCreate(ctx, customersDomain)
 }
@@ -114,6 +94,22 @@ func (usecase *adminUsecase) CustomersGetByID(ctx context.Context, id string) (C
 
 func (usecase *adminUsecase) CustomersGetAll(ctx context.Context) ([]CustomersDomain, error) {
 	return usecase.adminRepository.CustomersGetAll(ctx)
+}
+
+func (usecase *adminUsecase) CustomerDelete(ctx context.Context, id string) error {
+	return usecase.adminRepository.CustomerDelete(ctx, id)
+}
+
+func (usecase *adminUsecase) PackagingOfficerCreate(ctx context.Context, customersDomain *PackagingOfficerDomain) (PackagingOfficerDomain, error) {
+	return usecase.adminRepository.PackagingOfficerCreate(ctx, customersDomain)
+}
+
+func (usecase *adminUsecase) PackagingOfficerGetByID(ctx context.Context, id string) (PackagingOfficerDomain, error) {
+	return usecase.adminRepository.PackagingOfficerGetByID(ctx, id)
+}
+
+func (usecase *adminUsecase) PackagingOfficerGetAll(ctx context.Context) ([]PackagingOfficerDomain, error) {
+	return usecase.adminRepository.PackagingOfficerGetAll(ctx)
 }
 
 func (usecase *adminUsecase) VendorsCreate(ctx context.Context, vendorsDomain *VendorsDomain) (VendorsDomain, error) {
@@ -160,6 +156,10 @@ func (usecase *adminUsecase) StocksCreate(ctx context.Context, stocksDomain *Sto
 	return usecase.adminRepository.StocksCreate(ctx, stocksDomain)
 }
 
+func (usecase *adminUsecase) ReminderPurchaseOrderCreate(ctx context.Context, reminderPurchaseOrderDomain *ReminderPurchaseOrderDomain) (ItemTransactionsDomain, error) {
+	return usecase.adminRepository.ReminderPurchaseOrderCreate(ctx, reminderPurchaseOrderDomain)
+}
+
 func (usecase *adminUsecase) StocksGetByID(ctx context.Context, id string) (StocksDomain, error) {
 	return usecase.adminRepository.StocksGetByID(ctx, id)
 }
@@ -174,18 +174,6 @@ func (su *adminUsecase) StocksGetAll(ctx context.Context, page int, limit int, s
 
 	return stocksDomain, totalItems, nil
 }
-
-// func (usecase *adminUsecase) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]StocksDomain, int, error) {
-// 	stocks, totalItems, err := usecase.adminRepository.StocksGetAll(ctx, page, limit, sort, order, search)
-// 	if err != nil {
-// 		return nil, 0, err
-// 	}
-// 	return stocks, totalItems, nil
-// }
-
-// func (usecase *adminUsecase) StocksGetAll(ctx context.Context) ([]StocksDomain, error) {
-// 	return usecase.adminRepository.StocksGetAll(ctx)
-// }
 
 func (usecase *adminUsecase) PurchasesCreate(ctx context.Context, purchasesDomain *PurchasesDomain) (PurchasesDomain, error) {
 	return usecase.adminRepository.PurchasesCreate(ctx, purchasesDomain)
@@ -219,10 +207,6 @@ func (usecase *adminUsecase) PurchasesGetAll(ctx context.Context, page int, limi
 	return purchases, total, nil
 }
 
-// func (usecase *adminUsecase) PurchasesGetAll(ctx context.Context) ([]PurchasesDomain, error) {
-// 	return usecase.adminRepository.PurchasesGetAll(ctx)
-// }
-
 func (usecase *adminUsecase) CartItemsGetByID(ctx context.Context, id string) (CartItemsDomain, error) {
 	return usecase.adminRepository.CartItemsGetByID(ctx, id)
 }
@@ -243,18 +227,74 @@ func (usecase *adminUsecase) CartItemsDelete(ctx context.Context, id string) err
 	return usecase.adminRepository.CartItemsDelete(ctx, id)
 }
 
+func (uc *adminUsecase) ItemTransactionsCreate(ctx context.Context, customerId string) (ItemTransactionsDomain, error) {
+	return uc.adminRepository.ItemTransactionsCreate(ctx, customerId)
+}
+
+func (usecase *adminUsecase) ItemTransactionsGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]ItemTransactionsDomain, int, error) {
+	// Validasi parameter input
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	if sort == "" {
+		sort = "id"
+	}
+	if order == "" {
+		order = "asc"
+	}
+
+	itemTransactions, total, err := usecase.adminRepository.ItemTransactionsGetAll(ctx, page, limit, sort, order, search, filters)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return itemTransactions, total, nil
+}
+
+// admin, err := usecase.adminRepository.AdminGetByVoucher(ctx, adminDomain)
+
+// if err != nil {
+// 	return "", err
+// }
+
+// return admin.Voucher, nil
+
+// func (usecase *adminUsecase) PurchasesGetAll(ctx context.Context) ([]PurchasesDomain, error) {
+// 	return usecase.adminRepository.PurchasesGetAll(ctx)
+// }
+
+// func (usecase *adminUsecase) AdminProfileGetByID(ctx context.Context, id string) (AdminProfileDomain, error) {
+// 	return usecase.adminRepository.AdminProfileGetByID(ctx, id)
+// }
+
+// func (usecase *adminUsecase) AdminProfileUpdate(ctx context.Context, profileDomain *AdminProfileDomain, id string) (AdminProfileDomain, error) {
+// 	return usecase.adminRepository.AdminProfileUpdate(ctx, profileDomain, id)
+// }
+
+// func (usecase *adminUsecase) AdminProfileUploadImage(ctx context.Context, profileDomain *AdminProfileDomain, avatarPath string, id string) (AdminProfileDomain, string, error) {
+// 	return usecase.adminRepository.AdminProfileUploadImage(ctx, profileDomain, avatarPath, id)
+// }
+
 // func (usecase *adminUsecase) ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error) {
 // 	// func (usecase *adminUsecase) ItemTransactionsCreate(ctx context.Context, id string) (ItemTransactionsDomain, error) {
 // 	return usecase.adminRepository.ItemTransactionsCreate(ctx, itemTransactionsDomain, id)
 // }
 
-func (uc *adminUsecase) ItemTransactionsCreate(ctx context.Context, customerId string) (ItemTransactionsDomain, error) {
-	return uc.adminRepository.ItemTransactionsCreate(ctx, customerId)
-}
+// func (usecase *adminUsecase) StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]StocksDomain, int, error) {
+// 	stocks, totalItems, err := usecase.adminRepository.StocksGetAll(ctx, page, limit, sort, order, search)
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+// 	return stocks, totalItems, nil
+// }
 
-func (usecase *adminUsecase) ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error) {
-	return usecase.adminRepository.ItemTransactionsGetAll(ctx)
-}
+// func (usecase *adminUsecase) StocksGetAll(ctx context.Context) ([]StocksDomain, error) {
+// 	return usecase.adminRepository.StocksGetAll(ctx)
+// }
 
 // func (usecase *adminUsecase) CartsCreate(ctx context.Context, cartItemsDomain *CartsDomain) (CartsDomain, error) {
 // 	return usecase.adminRepository.CartsCreate(ctx, cartItemsDomain)

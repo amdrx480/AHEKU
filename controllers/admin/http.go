@@ -14,8 +14,10 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/xuri/excelize/v2"
 )
 
 type AuthController struct {
@@ -268,7 +270,7 @@ func (ctrl *AuthController) AdminGetProfile(c echo.Context) error {
 	// Konversi admin domain ke respons dengan URL gambar lengkap
 	resp := response.FromAdminsDomain(user)
 	if user.ImagePath != "" {
-		resp.ImagePath = fmt.Sprintf("http://192.168.43.91:8080/images/%s", user.ImagePath)
+		resp.ImagePath = fmt.Sprintf("http://192.168.253.91:8080/images/%s", user.ImagePath)
 	}
 	return controllers.NewResponse(c, http.StatusOK, false, "admin info found", resp)
 
@@ -493,6 +495,74 @@ func (ac *AuthController) CustomersGetAll(c echo.Context) error {
 
 	for _, category := range categoriesData {
 		categories = append(categories, response.FromCustomersDomain(category))
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "all customers", categories)
+}
+
+func (cc *AuthController) CustomerDelete(c echo.Context) error {
+	customerID := c.Param("id")
+	ctx := c.Request().Context()
+
+	err := cc.authUseCase.CustomerDelete(ctx, customerID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to delete a customer", "")
+
+	}
+	return controllers.NewResponse(c, http.StatusOK, false, "customers deleted", "")
+}
+
+func (ac *AuthController) PackagingOfficerGetByID(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	customersID := c.Param("id")
+
+	customers, err := ac.authUseCase.PackagingOfficerGetByID(ctx, customersID)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusNotFound, true, "packaging officer not found", "")
+	}
+
+	return controllers.NewResponse(c, http.StatusOK, false, "packaging officer found", response.FromPackagingOfficerDomain(customers))
+}
+
+func (ac *AuthController) PackagingOfficerCreate(c echo.Context) error {
+	input := request.PackagingOfficer{}
+	ctx := c.Request().Context()
+
+	if err := c.Bind(&input); err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	err := input.Validate()
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request", "")
+	}
+
+	packagingOfficer, err := ac.authUseCase.PackagingOfficerCreate(ctx, input.ToPackagingOfficerDomain())
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to add a packaging officer", "")
+	}
+
+	return controllers.NewResponse(c, http.StatusCreated, false, "packaging officer registered", response.FromPackagingOfficerDomain(packagingOfficer))
+}
+
+func (ac *AuthController) PackagingOfficerGetAll(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	categoriesData, err := ac.authUseCase.PackagingOfficerGetAll(ctx)
+
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch data", "")
+	}
+
+	categories := []response.PackagingOfficer{}
+
+	for _, category := range categoriesData {
+		categories = append(categories, response.FromPackagingOfficerDomain(category))
 	}
 
 	return controllers.NewResponse(c, http.StatusOK, false, "all customers", categories)
@@ -1032,6 +1102,274 @@ func (ac *AuthController) StocksGetAll(c echo.Context) error {
 	return controllers.NewPaginatedResponse(c, http.StatusOK, "Stocks retrieved successfully", stocks, page, limit, totalItems)
 }
 
+func (ac *AuthController) StocksExportToExcel(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	// Ambil parameter query untuk pagination, sorting, dan search
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	if page == 0 {
+		page = 1 // Default to page 1 if not specified or invalid
+	}
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit == 0 {
+		limit = 10 // Default to 10 items per page if not specified or invalid
+	}
+	sort := c.QueryParam("sort")
+	if sort == "" {
+		sort = "id" // Default sorting field
+	}
+	order := c.QueryParam("order")
+	if order == "" {
+		order = "asc" // Default order
+	}
+	search := c.QueryParam("search")
+
+	// Extract filters from query params
+	filters := make(map[string]interface{})
+	categoryNames := c.QueryParam("category_names")
+	if categoryNames != "" {
+		filters["category_name"] = strings.Split(categoryNames, ",")
+	}
+	unitNames := c.QueryParam("unit_names")
+	if unitNames != "" {
+		filters["unit_name"] = strings.Split(unitNames, ",")
+	}
+
+	// Fetch stocks data from use case with pagination, sorting, search, and filters
+	stocksData, _, err := ac.authUseCase.StocksGetAll(ctx, page, limit, sort, order, search, filters)
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+	}
+
+	// Create a new Excel file
+	f := excelize.NewFile()
+	sheet := "Sheet1"
+	f.NewSheet(sheet)
+
+	// Set sheet name
+	sheetName := "DataStok"
+	f.SetSheetName(sheet, sheetName)
+
+	// Tambahkan judul ke lembar Excel
+	companyTitle := "PT. Anugrah Hadi Electric"
+	titleHeader := fmt.Sprintf("Data Stok - Rekapitulasi Riwayat Barang Tahun %d", time.Now().Year())
+	err = f.SetCellValue(sheetName, "A1", companyTitle)
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Error setting company title: %s", err.Error())
+	}
+	err = f.SetCellValue(sheetName, "A2", titleHeader)
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Error setting title header: %s", err.Error())
+	}
+
+	// Merge dan atur gaya sel untuk judul agar berada di tengah
+	titleStyle, err := f.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
+		Font:      &excelize.Font{Bold: true, Size: 14},
+	})
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Error creating title style: %s", err.Error())
+	}
+	f.SetCellStyle(sheetName, "A1", "J1", titleStyle)
+	f.MergeCell(sheetName, "A1", "J1")
+	f.SetCellStyle(sheetName, "A2", "J2", titleStyle)
+	f.MergeCell(sheetName, "A2", "J2")
+
+	// Set header row
+	headers := []string{"ID", "Created At", "Stock Name", "Stock Code", "Category Name", "Unit Name", "Description", "Image Path", "Stock Total", "Selling Price"}
+	for i, header := range headers {
+		cell := fmt.Sprintf("%s%d", string(rune('A'+i)), 3) // Mulai dari baris ke-3 untuk header
+		f.SetCellValue(sheetName, cell, header)
+	}
+
+	// Fill data rows
+	for i, stock := range stocksData {
+		row := i + 4 // Mulai dari baris ke-4 untuk data
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), stock.ID)
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), stock.CreatedAt.Format("01/02/2006 03:04:05 PM"))
+		f.SetCellValue(sheetName, fmt.Sprintf("C%d", row), stock.StockName)
+		f.SetCellValue(sheetName, fmt.Sprintf("D%d", row), stock.StockCode)
+		f.SetCellValue(sheetName, fmt.Sprintf("E%d", row), stock.CategoryName)
+		f.SetCellValue(sheetName, fmt.Sprintf("F%d", row), stock.UnitName)
+		f.SetCellValue(sheetName, fmt.Sprintf("G%d", row), stock.Description)
+		f.SetCellValue(sheetName, fmt.Sprintf("H%d", row), stock.ImagePath)
+		f.SetCellValue(sheetName, fmt.Sprintf("I%d", row), stock.StockTotal)
+		f.SetCellValue(sheetName, fmt.Sprintf("J%d", row), utils.FormatRupiah(stock.SellingPrice, 2, ",", "."))
+	}
+
+	// Tambahkan border ke sel header
+	headerBorderStyle, err := f.NewStyle(&excelize.Style{
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
+		},
+	})
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Error creating header border style: %s", err.Error())
+	}
+	f.SetCellStyle(sheetName, "A3", "J3", headerBorderStyle)
+
+	// Tambahkan border ke sel data
+	for i := 0; i < len(stocksData); i++ {
+		startCell, _ := excelize.JoinCellName("A", i+4) // Mulai dari baris ke-empat
+		endCell, _ := excelize.JoinCellName("J", i+4)   // Kolom J untuk data
+
+		borderStyle, _ := f.NewStyle(&excelize.Style{
+			Border: []excelize.Border{
+				{Type: "left", Color: "000000", Style: 1},
+				{Type: "top", Color: "000000", Style: 1},
+				{Type: "bottom", Color: "000000", Style: 1},
+				{Type: "right", Color: "000000", Style: 1},
+			},
+		})
+
+		f.SetCellStyle(sheetName, startCell, endCell, borderStyle)
+	}
+
+	// Set column width automatically
+	for i, header := range headers {
+		col := string(rune('A' + i))
+		maxWidth := len(header)
+		for _, stock := range stocksData {
+			cellValue := ""
+			switch header {
+			case "ID":
+				cellValue = fmt.Sprintf("%d", stock.ID)
+			case "Created At":
+				cellValue = stock.CreatedAt.Format("01/02/2006 03:04:05 PM")
+			case "Stock Name":
+				cellValue = stock.StockName
+			case "Stock Code":
+				cellValue = stock.StockCode
+			case "Category Name":
+				cellValue = stock.CategoryName
+			case "Unit Name":
+				cellValue = stock.UnitName
+			case "Description":
+				cellValue = stock.Description
+			case "Image Path":
+				cellValue = stock.ImagePath
+			case "Stock Total":
+				cellValue = fmt.Sprintf("%d", stock.StockTotal)
+			case "Selling Price":
+				cellValue = utils.FormatRupiah(stock.SellingPrice, 2, ",", ".")
+			}
+			if len(cellValue) > maxWidth {
+				maxWidth = len(cellValue)
+			}
+		}
+		f.SetColWidth(sheetName, col, col, float64(maxWidth)*1.2) // Menyesuaikan kolom dengan lebar maksimal
+	}
+
+	// Tambahkan alamat di bawah tabel
+	address := "Alamat : Jl. Sriwijaya III No.9, Perumnas 3, Kec. Karawaci, Kabupaten Tangerang, Banten 15810"
+	addressCell, _ := excelize.JoinCellName("A", len(stocksData)+5) // Gantilah "5" sesuai dengan jumlah baris data stok
+	f.SetCellValue(sheetName, addressCell, address)
+
+	// Set the active sheet to the one we created
+	sheetIndex, err := f.GetSheetIndex(sheetName)
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to get sheet index", "")
+	}
+	f.SetActiveSheet(sheetIndex)
+
+	// Write the file to a buffer
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to generate Excel file", "")
+	}
+
+	// Return the file as a response
+	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
+}
+
+// func (ac *AuthController) StocksExportToExcel(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	// Ambil parameter query untuk pagination, sorting, dan search
+// 	page, _ := strconv.Atoi(c.QueryParam("page"))
+// 	if page == 0 {
+// 		page = 1 // Default to page 1 if not specified or invalid
+// 	}
+// 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+// 	if limit == 0 {
+// 		limit = 10 // Default to 10 items per page if not specified or invalid
+// 	}
+// 	sort := c.QueryParam("sort")
+// 	if sort == "" {
+// 		sort = "id" // Default sorting field
+// 	}
+// 	order := c.QueryParam("order")
+// 	if order == "" {
+// 		order = "asc" // Default order
+// 	}
+// 	search := c.QueryParam("search")
+
+// 	// Extract filters from query params
+// 	filters := make(map[string]interface{})
+// 	categoryNames := c.QueryParam("category_names")
+// 	if categoryNames != "" {
+// 		filters["category_name"] = strings.Split(categoryNames, ",")
+// 	}
+// 	unitNames := c.QueryParam("unit_names")
+// 	if unitNames != "" {
+// 		filters["unit_name"] = strings.Split(unitNames, ",")
+// 	}
+
+// 	// Fetch stocks data from use case with pagination, sorting, search, and filters
+// 	stocksData, _, err := ac.authUseCase.StocksGetAll(ctx, page, limit, sort, order, search, filters)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
+// 	}
+
+// 	// Create a new Excel file
+// 	f := excelize.NewFile()
+// 	sheet := "Sheet1"
+// 	f.NewSheet(sheet)
+
+// 	// Set header row
+// 	headers := []string{"ID", "Created At", "Updated At", "Deleted At", "Stock Name", "Stock Code", "Category Name", "Unit Name", "Description", "Image Path", "Stock Total", "Selling Price"}
+// 	for i, header := range headers {
+// 		cell := fmt.Sprintf("%s%d", string(rune('A'+i)), 1)
+// 		f.SetCellValue(sheet, cell, header)
+// 	}
+
+// 	// Fill data rows
+// 	for i, stock := range stocksData {
+// 		row := i + 2
+// 		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), stock.ID)
+// 		f.SetCellValue(sheet, fmt.Sprintf("B%d", row), stock.CreatedAt)
+// 		f.SetCellValue(sheet, fmt.Sprintf("C%d", row), stock.UpdatedAt)
+// 		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), stock.DeletedAt)
+// 		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), stock.StockName)
+// 		f.SetCellValue(sheet, fmt.Sprintf("F%d", row), stock.StockCode)
+// 		f.SetCellValue(sheet, fmt.Sprintf("G%d", row), stock.CategoryName)
+// 		f.SetCellValue(sheet, fmt.Sprintf("H%d", row), stock.UnitName)
+// 		f.SetCellValue(sheet, fmt.Sprintf("I%d", row), stock.Description)
+// 		f.SetCellValue(sheet, fmt.Sprintf("J%d", row), stock.ImagePath)
+// 		f.SetCellValue(sheet, fmt.Sprintf("K%d", row), stock.StockTotal)
+// 		f.SetCellValue(sheet, fmt.Sprintf("L%d", row), stock.SellingPrice)
+// 	}
+
+// 	// Set the active sheet to the one we created
+// 	sheetIndex, err := f.GetSheetIndex(sheet)
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to get sheet index", "")
+// 	}
+// 	f.SetActiveSheet(sheetIndex)
+
+// 	// Write the file to a buffer
+// 	buf, err := f.WriteToBuffer()
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to generate Excel file", "")
+// 	}
+
+// 	// Return the file as a response
+// 	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
+// }
+
 // func (ac *AuthController) StocksGetAll(c echo.Context) error {
 // 	ctx := c.Request().Context()
 
@@ -1250,6 +1588,39 @@ func (ac *AuthController) ItemTransactionsCreate(c echo.Context) error {
 	return controllers.NewResponseWithoutData(c, http.StatusCreated, false, "successfully created item transactions")
 }
 
+func (ac *AuthController) ReminderPurchaseOrderCreate(c echo.Context) error {
+	customerIDStr := c.Param("customer_id") // Ambil customer_id dari parameter URL
+
+	customerID, err := strconv.Atoi(customerIDStr) // Konversi customerID dari string ke int
+	if err != nil {
+		log.Printf("Error converting customer_id to int: %v\n", err)
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid customer_id", "")
+	}
+
+	reminder := new(admin.ReminderPurchaseOrderDomain)
+
+	// Bind JSON request body ke struct ReminderPurchaseOrderDomain
+	if err := c.Bind(reminder); err != nil {
+		log.Printf("Error binding request body: %v\n", err)
+		return controllers.NewResponse(c, http.StatusBadRequest, true, "invalid request payload", "")
+	}
+
+	// Set customerID dari URL parameter ke struct ReminderPurchaseOrderDomain
+	reminder.CartItem.CustomerID = uint(customerID) // Konversi dari int ke uint
+
+	ctx := c.Request().Context()
+
+	// Panggil use case untuk membuat reminder purchase order
+	itemTransaction, err := ac.authUseCase.ReminderPurchaseOrderCreate(ctx, reminder)
+
+	if err != nil {
+		log.Printf("Error creating reminder purchase order: %v\n", err)
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to create reminder purchase order", "")
+	}
+
+	return controllers.NewResponse(c, http.StatusCreated, false, "successfully created reminder purchase order", itemTransaction)
+}
+
 // func (ac *AuthController) ItemTransactionsCreate(c echo.Context) error {
 // 	historyID := c.Param("customer_id")
 // 	input := request.ItemTransactions{}
@@ -1281,20 +1652,137 @@ func (ac *AuthController) ItemTransactionsCreate(c echo.Context) error {
 func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	historiesData, err := hc.authUseCase.ItemTransactionsGetAll(ctx)
+	// Default pagination parameters
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	if page <= 0 {
+		page = 1
+	}
 
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit <= 0 {
+		limit = 10
+	}
+
+	// Default sorting parameters
+	sort := c.QueryParam("sort")
+	if sort == "" {
+		sort = "id"
+	}
+
+	order := c.QueryParam("order")
+	if order == "" {
+		order = "asc"
+	}
+
+	// Search keyword
+	search := c.QueryParam("search")
+
+	// Filters map
+	filters := make(map[string]interface{})
+
+	customerID, _ := strconv.Atoi(c.QueryParam("customer_id"))
+	if customerID != 0 {
+		filters["customer_id"] = customerID
+	}
+
+	stockID, _ := strconv.Atoi(c.QueryParam("stock_id"))
+	if stockID != 0 {
+		filters["stock_id"] = stockID
+	}
+
+	unitID, _ := strconv.Atoi(c.QueryParam("unit_id"))
+	if unitID != 0 {
+		filters["unit_id"] = unitID
+	}
+
+	categoryID, _ := strconv.Atoi(c.QueryParam("category_id"))
+	if categoryID != 0 {
+		filters["category_id"] = categoryID
+	}
+
+	quantityMin, _ := strconv.Atoi(c.QueryParam("quantity_min"))
+	if quantityMin != 0 {
+		filters["quantity_min"] = quantityMin
+	}
+
+	quantityMax, _ := strconv.Atoi(c.QueryParam("quantity_max"))
+	if quantityMax != 0 {
+		filters["quantity_max"] = quantityMax
+	}
+
+	priceMin, _ := strconv.Atoi(c.QueryParam("price_min"))
+	if priceMin != 0 {
+		filters["price_min"] = priceMin
+	}
+
+	priceMax, _ := strconv.Atoi(c.QueryParam("price_max"))
+	if priceMax != 0 {
+		filters["price_max"] = priceMax
+	}
+
+	subTotalMin, _ := strconv.Atoi(c.QueryParam("sub_total_min"))
+	if subTotalMin != 0 {
+		filters["sub_total_min"] = subTotalMin
+	}
+
+	subTotalMax, _ := strconv.Atoi(c.QueryParam("sub_total_max"))
+	if subTotalMax != 0 {
+		filters["sub_total_max"] = subTotalMax
+	}
+
+	customerNames := c.QueryParam("customer_names")
+	if customerNames != "" {
+		filters["customer_name"] = strings.Split(customerNames, ",")
+	}
+
+	stockNames := c.QueryParam("stock_name")
+	if stockNames != "" {
+		filters["stock_name"] = strings.Split(stockNames, ",")
+	}
+
+	unitNames := c.QueryParam("unit_names")
+	if unitNames != "" {
+		filters["unit_name"] = strings.Split(unitNames, ",")
+	}
+
+	categoryNames := c.QueryParam("category_names")
+	if categoryNames != "" {
+		filters["category_name"] = strings.Split(categoryNames, ",")
+	}
+
+	// Fetch item transactions data from use case with pagination, sorting, search, and filters
+	itemTransactionsData, totalItems, err := hc.authUseCase.ItemTransactionsGetAll(ctx, page, limit, sort, order, search, filters)
 	if err != nil {
-		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch item transactions data", "")
+		return controllers.NewResponse(c, http.StatusInternalServerError, true, "Failed to fetch data", "")
 	}
 
-	histories := []response.ItemTransactions{}
-
-	for _, course := range historiesData {
-		histories = append(histories, response.FromItemTransactionsDomain(course))
+	// Convert domain item transactions to response item transactions
+	itemTransactions := make([]response.ItemTransactions, len(itemTransactionsData))
+	for i, itemTransaction := range itemTransactionsData {
+		itemTransactions[i] = response.FromItemTransactionsDomain(itemTransaction)
 	}
 
-	return controllers.NewResponse(c, http.StatusOK, false, "all item transactions", histories)
+	// Prepare paginated response using NewPaginatedResponse
+	return controllers.NewPaginatedResponse(c, http.StatusOK, "All item transactions", itemTransactions, page, limit, totalItems)
 }
+
+// func (hc *AuthController) ItemTransactionsGetAll(c echo.Context) error {
+// 	ctx := c.Request().Context()
+
+// 	historiesData, err := hc.authUseCase.ItemTransactionsGetAll(ctx)
+
+// 	if err != nil {
+// 		return controllers.NewResponse(c, http.StatusInternalServerError, true, "failed to fetch item transactions data", "")
+// 	}
+
+// 	histories := []response.ItemTransactions{}
+
+// 	for _, course := range historiesData {
+// 		histories = append(histories, response.FromItemTransactionsDomain(course))
+// 	}
+
+// 	return controllers.NewResponse(c, http.StatusOK, false, "all item transactions", histories)
+// }
 
 // func (ac *AuthController) CartsCreate(c echo.Context) error {
 // 	input := request.Carts{}

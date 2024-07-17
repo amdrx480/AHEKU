@@ -44,6 +44,30 @@ type CustomersDomain struct {
 	CartItems       []CartItemsDomain
 }
 
+// Packaging Officer
+type PackagingOfficerDomain struct {
+	ID             uint
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      gorm.DeletedAt
+	OfficerName    string
+	OfficerAddress string
+	OfficerEmail   string
+	OfficerPhone   string
+}
+
+// Packaging Officer
+type DeliveryOfficerDomain struct {
+	ID             uint `gorm:"primaryKey"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      gorm.DeletedAt `gorm:"index"`
+	OfficerName    string
+	OfficerAddress string
+	OfficerEmail   string
+	OfficerPhone   string
+}
+
 // Categories
 type CategoriesDomain struct {
 	ID           uint
@@ -136,6 +160,7 @@ type ItemTransactionsDomain struct {
 	CustomerName string
 	StockID      uint
 	StockName    string
+	StockCode    string
 	UnitID       uint
 	UnitName     string
 	CategoryID   uint
@@ -145,29 +170,33 @@ type ItemTransactionsDomain struct {
 	SubTotal     int
 }
 
-// Role       RoleDomain
+type ReminderPurchaseOrderDomain struct {
+	ID                 uint
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	DeletedAt          gorm.DeletedAt
+	PackagingOfficerID uint
+	// Admins             AdminDomain
+	// AdminID            uint
+	CartItem     CartItemsDomain // Asumsikan struktur CartItems sesuai dengan yang Anda definisikan sebelumnya
+	ReminderTime time.Time
 
-// type AdminProfileDomain struct {
-// 	ID         uint
-// 	CreatedAt  time.Time
-// 	UpdatedAt  time.Time
-// 	DeletedAt  gorm.DeletedAt
-// 	Name       string
-// 	Nip        string
-// 	Division   string
-// 	Image_Path string
-// }
+	// AdminID            string // Menambahkan AdminID untuk menghubungkan dengan Admin yang berkaitan
+	// Packaging          PackagingOfficerDomain
+}
 
-// One Carts To Many CartItems
-// type CartsDomain struct {
-// 	ID         uint
-// 	CreatedAt  time.Time
-// 	UpdatedAt  time.Time
-// 	DeletedAt  gorm.DeletedAt
-// 	CustomerID uint
-// 	CartItems  []CartItemsDomain
-// 	Total      int
-// 	Status     string
+// type ReminderPurchaseOrderDomain struct {
+// 	ID                 uint
+// 	CreatedAt          time.Time
+// 	UpdatedAt          time.Time
+// 	DeletedAt          gorm.DeletedAt
+// 	CartItemID         uint
+// 	CartItem           CartItemsDomain
+// 	AdminID            uint
+// 	Admin              AdminDomain
+// 	PackagingOfficerID uint
+// 	Packaging          PackagingOfficerDomain
+// 	ReminderTime       time.Time
 // }
 
 type Usecase interface {
@@ -192,6 +221,12 @@ type Usecase interface {
 	CustomersGetByID(ctx context.Context, id string) (CustomersDomain, error)
 	CustomersCreate(ctx context.Context, customersDomain *CustomersDomain) (CustomersDomain, error)
 	CustomersGetAll(ctx context.Context) ([]CustomersDomain, error)
+	CustomerDelete(ctx context.Context, id string) error
+
+	// Packaging Officer
+	PackagingOfficerGetByID(ctx context.Context, id string) (PackagingOfficerDomain, error)
+	PackagingOfficerCreate(ctx context.Context, packagingOfficerDomain *PackagingOfficerDomain) (PackagingOfficerDomain, error)
+	PackagingOfficerGetAll(ctx context.Context) ([]PackagingOfficerDomain, error)
 
 	// Category
 	CategoryGetByID(ctx context.Context, id string) (CategoriesDomain, error)
@@ -216,6 +251,9 @@ type Usecase interface {
 	// StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]StocksDomain, int, error)
 	// StocksGetAll(ctx context.Context) ([]StocksDomain, error)
 
+	// ReminderPreOrder
+	ReminderPurchaseOrderCreate(ctx context.Context, reminderPurchaseOrderDomain *ReminderPurchaseOrderDomain) (ItemTransactionsDomain, error)
+
 	// Purchases
 	PurchasesGetByID(ctx context.Context, id string) (PurchasesDomain, error)
 	PurchasesCreate(ctx context.Context, purchasesDomain *PurchasesDomain) (PurchasesDomain, error)
@@ -233,7 +271,7 @@ type Usecase interface {
 
 	// ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
 	ItemTransactionsCreate(ctx context.Context, customerId string) (ItemTransactionsDomain, error)
-	ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error)
+	ItemTransactionsGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]ItemTransactionsDomain, int, error)
 
 	// Carts
 	// CartsGetByID(ctx context.Context, id string) (CartsDomain, error)
@@ -265,6 +303,12 @@ type Repository interface {
 	CustomersGetByID(ctx context.Context, id string) (CustomersDomain, error)
 	CustomersCreate(ctx context.Context, customersDomain *CustomersDomain) (CustomersDomain, error)
 	CustomersGetAll(ctx context.Context) ([]CustomersDomain, error)
+	CustomerDelete(ctx context.Context, id string) error
+
+	// Packaging Officer
+	PackagingOfficerGetByID(ctx context.Context, id string) (PackagingOfficerDomain, error)
+	PackagingOfficerCreate(ctx context.Context, packagingOfficerDomain *PackagingOfficerDomain) (PackagingOfficerDomain, error)
+	PackagingOfficerGetAll(ctx context.Context) ([]PackagingOfficerDomain, error)
 
 	// Category
 	CategoryCreate(ctx context.Context, categoryDomain *CategoriesDomain) (CategoriesDomain, error)
@@ -289,6 +333,9 @@ type Repository interface {
 	// StocksGetAll(ctx context.Context, page int, limit int, sort string, order string, search string) ([]StocksDomain, int, error)
 	// StocksGetAll(ctx context.Context) ([]StocksDomain, error)
 
+	// ReminderPreOrder
+	ReminderPurchaseOrderCreate(ctx context.Context, reminderPurchaseOrderDomain *ReminderPurchaseOrderDomain) (ItemTransactionsDomain, error)
+
 	// Purchases
 	PurchasesGetByID(ctx context.Context, id string) (PurchasesDomain, error)
 	PurchasesCreate(ctx context.Context, purchasesDomain *PurchasesDomain) (PurchasesDomain, error)
@@ -305,7 +352,7 @@ type Repository interface {
 
 	// ItemTransactionsCreate(ctx context.Context, itemTransactionsDomain *ItemTransactionsDomain, id string) (ItemTransactionsDomain, error)
 	ItemTransactionsCreate(ctx context.Context, customerId string) (ItemTransactionsDomain, error)
-	ItemTransactionsGetAll(ctx context.Context) ([]ItemTransactionsDomain, error)
+	ItemTransactionsGetAll(ctx context.Context, page int, limit int, sort string, order string, search string, filters map[string]interface{}) ([]ItemTransactionsDomain, int, error)
 
 	// Carts
 	// CartsGetByID(ctx context.Context, id string) (CartsDomain, error)
@@ -313,3 +360,28 @@ type Repository interface {
 	// CartsGetAll(ctx context.Context) ([]CartsDomain, error)
 	// CartsDelete(ctx context.Context, id string) error
 }
+
+// Role       RoleDomain
+
+// type AdminProfileDomain struct {
+// 	ID         uint
+// 	CreatedAt  time.Time
+// 	UpdatedAt  time.Time
+// 	DeletedAt  gorm.DeletedAt
+// 	Name       string
+// 	Nip        string
+// 	Division   string
+// 	Image_Path string
+// }
+
+// One Carts To Many CartItems
+// type CartsDomain struct {
+// 	ID         uint
+// 	CreatedAt  time.Time
+// 	UpdatedAt  time.Time
+// 	DeletedAt  gorm.DeletedAt
+// 	CustomerID uint
+// 	CartItems  []CartItemsDomain
+// 	Total      int
+// 	Status     string
+// }

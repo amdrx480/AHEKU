@@ -55,6 +55,13 @@ type Customers struct {
 	CustomerPhone   string `json:"customer_phone" validate:"required"`
 }
 
+type PackagingOfficer struct {
+	OfficerName    string `json:"officer_name" validate:"required"`
+	OfficerAddress string `json:"officer_address" validate:"required"`
+	OfficerEmail   string `json:"officer_email" validate:"required"`
+	OfficerPhone   string `json:"officer_phone" validate:"required"`
+}
+
 type Category struct {
 	CategoryName string `json:"category_name" validate:"required"`
 }
@@ -166,6 +173,15 @@ func (request *Customers) ToCustomersDomain() *admin.CustomersDomain {
 	}
 }
 
+func (request *PackagingOfficer) ToPackagingOfficerDomain() *admin.PackagingOfficerDomain {
+	return &admin.PackagingOfficerDomain{
+		OfficerName:    request.OfficerName,
+		OfficerAddress: request.OfficerAddress,
+		OfficerEmail:   request.OfficerEmail,
+		OfficerPhone:   request.OfficerPhone,
+	}
+}
+
 func (request *Category) ToCategoriesDomain() *admin.CategoriesDomain {
 	return &admin.CategoriesDomain{
 		CategoryName: request.CategoryName,
@@ -274,6 +290,14 @@ func (request *Role) Validate() error {
 // }
 
 func (request *Customers) Validate() error {
+	validate := validator.New()
+
+	err := validate.Struct(request)
+
+	return err
+}
+
+func (request *PackagingOfficer) Validate() error {
 	validate := validator.New()
 
 	err := validate.Struct(request)
